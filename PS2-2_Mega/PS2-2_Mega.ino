@@ -1,8 +1,6 @@
 #include <PS2X_lib.h>  //for v1.6
 
 #include <Servo.h>
-#include <PinChangeInterrupt.h>
-
 
 /******************************************************************
  * set pins connected to PS2 controller:
@@ -82,15 +80,14 @@ int pssLYUpM4 = 0;
 # define MIN_WRSIT_POS 0
 # define MAX_WRIST_POS 170
 
+#define baseSwich1 42
+#define baseSwich2 43
+
 void setup(){
 
-// ------ Pin interrupt -------
-
- pinMode(IN_INTERRUPT_42, INPUT_PULLUP); 
- pinMode(IN_INTERRUPT_43, INPUT_PULLUP); 
-
- attachPCINT(digitalPinToPCINT(IN_INTERRUPT_42), stopMoveBasePos1, CHANGE);
- attachPCINT(digitalPinToPCINT(IN_INTERRUPT_43), stopMoveBasePos2, CHANGE);
+// ------ Switch pins ---------
+  pinMode(baseSwich1, INPUT_PULLUP); 
+  pinMode(baseSwich2, INPUT_PULLUP); 
 // ----------------------------
 
 // ------ servo motor -------
@@ -160,23 +157,29 @@ void setup(){
    }
 }
 
-void stopMoveBasePos1(void) {
-  stopBasePos1 = 1;
-}
-
-void stopMoveBasePos2(void) {
-  stopBasePos2 = 1;
-}
-
 void loop() {
-  /* You must Read Gamepad to get new values and set vibration values
-     ps2x.read_gamepad(small motor on/off, larger motor strenght from 0-255)
-     if you don't enable the rumble, use ps2x.read_gamepad(); with no values
-     You should call this at least once a second
-   */  
+ 
   if(error == 1) //skip loop if no controller found
     return; 
-     
+
+    // ------------- Switches ---------------
+
+      if(!digitalRead(baseSwich1)){
+        stopBasePos1 = 1;
+        Serial.println("baseSwich1 on"); 
+      }else{
+        stopBasePos1 = 0;
+      }
+
+      if(!digitalRead(baseSwich2)){
+        stopBasePos2 = 1;
+        Serial.println("baseSwich2 on"); 
+      }else{
+        stopBasePos2 = 0;
+      }
+
+    // -------------------------------------
+    
     ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
     
     if(ps2x.Button(PSB_START))         //will be TRUE as long as button is pressed
@@ -277,32 +280,40 @@ void loop() {
 
 
 
-// ------ stepper motor#1 -------
+// ------ stepper motor#1 Base -------
 
-    if((ps2x.Analog(PSS_RX) == 0)){
-      if(pssLYUpM2 == 0)
-        pssLYUpM2 = 2;        
-      if(pos2M2 > 0 && pssLYDownM2 == 2){
-        pos2M2 = 0;
-        pssLYDownM2 = 0;
-      }                
-      pos2M2=2;
-      rotate(pos2M2, 0.10, 1);
-      //Serial.println(pos2M2, DEC);
-    }  
-    
-    if((ps2x.Analog(PSS_RX) == 255)){
-      if(pssLYDownM2 == 0)
-        pssLYDownM2 = 2;
-      if(pos2M2 < 0 && pssLYUpM2 == 2){
-        pos2M2 = 0;
-        pssLYUpM2 = 0;
-      }                   
-      pos2M2=-2;
-      rotate(pos2M2, 0.10, 1);
-      //Serial.println(pos2M2, DEC);
-    }     
+    // ==== Switch 1 ====
 
+    if(!stopBasePos1){
+
+      if((ps2x.Analog(PSS_RX) == 0)){
+        if(pssLYUpM2 == 0)
+          pssLYUpM2 = 2;        
+        if(pos2M2 > 0 && pssLYDownM2 == 2){
+          pos2M2 = 0;
+          pssLYDownM2 = 0;
+        }                
+        pos2M2=2;
+        rotate(pos2M2, 0.10, 1);
+        Serial.println(pos2M2, DEC);
+      }        
+    }
+
+    // ==== Switch 2 ====
+
+    if(!stopBasePos2){
+      if((ps2x.Analog(PSS_RX) == 255)){
+        if(pssLYDownM2 == 0)
+          pssLYDownM2 = 2;
+        if(pos2M2 < 0 && pssLYUpM2 == 2){
+          pos2M2 = 0;
+          pssLYUpM2 = 0;
+        }                   
+        pos2M2=-2;
+        rotate(pos2M2, 0.10, 1);
+        Serial.println(pos2M2, DEC);
+      }     
+    }
 // ------ stepper motor#2 -------
 
     if((ps2x.Analog(PSS_RY) == 0)){
@@ -329,7 +340,7 @@ void loop() {
       //Serial.println(pos2M1, DEC);
     }    
 
-// ------ stepper motor#3 -------
+// ------ stepper motor#3  -------
 
     if((ps2x.Analog(PSS_LX) == 0)){
       if(pssLYUpM3 == 0)
