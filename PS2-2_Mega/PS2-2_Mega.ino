@@ -38,8 +38,8 @@ Servo myservo;
 Servo myservo2;
 int pos = 90;
 int pos2 = 90;
-int stopBasePos1 = 0;
-int stopBasePos2 = 0;
+
+int buzzer = 31; 
 
 // ------ stepper motor#1 -------
 # define DIR_PIN_M1 6
@@ -80,14 +80,38 @@ int pssLYUpM4 = 0;
 # define MIN_WRSIT_POS 0
 # define MAX_WRIST_POS 170
 
-#define baseSwich1 42
-#define baseSwich2 43
+#define shoulderSwich1 36  // switsh3
+#define shoulderSwich2 37  // switsh4
+#define elbowSwich1 40  // switsh5
+#define elbowSwich2 38  // switsh6
+#define wristSwich1 39  // switsh7
+#define wristSwich2 41  // switsh8
+#define baseSwich1 42   // switch1
+#define baseSwich2 43   // switch2
+
+int stopBasePos1 = 0;
+int stopBasePos2 = 0;
+int stopWristPos1 = 0;
+int stopWristPos2 = 0;
+int stopElbowPos1 = 0;
+int stopElbowPos2 = 0;
+int stopShoulderPos1 = 0;
+int stopShoulderPos2 = 0;
 
 void setup(){
 
+  pinMode(buzzer, OUTPUT); 
+  noTone(buzzer); 
+
 // ------ Switch pins ---------
+  pinMode(shoulderSwich1, INPUT_PULLUP); 
+  pinMode(shoulderSwich2, INPUT_PULLUP); 
+  pinMode(elbowSwich1, INPUT_PULLUP); 
+  pinMode(elbowSwich2, INPUT_PULLUP); 
   pinMode(baseSwich1, INPUT_PULLUP); 
   pinMode(baseSwich2, INPUT_PULLUP); 
+  pinMode(wristSwich1, INPUT_PULLUP); 
+  pinMode(wristSwich2, INPUT_PULLUP); 
 // ----------------------------
 
 // ------ servo motor -------
@@ -164,20 +188,86 @@ void loop() {
 
     // ------------- Switches ---------------
 
+      // ----------- Base -----------
+      
       if(!digitalRead(baseSwich1)){
         stopBasePos1 = 1;
+        tone(buzzer, 1950); 
         Serial.println("baseSwich1 on"); 
       }else{
         stopBasePos1 = 0;
+        noTone(buzzer
+        ); 
       }
 
       if(!digitalRead(baseSwich2)){
         stopBasePos2 = 1;
+        tone(buzzer, 1950); 
         Serial.println("baseSwich2 on"); 
       }else{
         stopBasePos2 = 0;
+        noTone(buzzer); 
       }
 
+      // ----------- Wrist -----------
+      
+      if(!digitalRead(wristSwich1)){
+        stopWristPos1 = 1;
+        tone(buzzer, 1950); 
+        Serial.println("wristSwich1 on"); 
+      }else{
+        stopWristPos1 = 0;
+        noTone(buzzer); 
+      }
+
+      if(!digitalRead(wristSwich2)){
+        stopWristPos2 = 1;
+        tone(buzzer, 1950); 
+        Serial.println("wristSwich2 on"); 
+      }else{
+        stopWristPos2 = 0;
+        noTone(buzzer); 
+      }
+
+      // ----------- Elbow -----------
+      
+      if(!digitalRead(elbowSwich1)){
+        stopElbowPos1 = 1;
+        tone(buzzer, 1950); 
+        Serial.println("elbowSwich1 on"); 
+      }else{
+        stopElbowPos1 = 0;
+        noTone(buzzer); 
+      }
+
+      if(!digitalRead(elbowSwich2)){
+        stopElbowPos2 = 1;
+        tone(buzzer, 1950); 
+        Serial.println("elbowSwich2 on"); 
+      }else{
+        stopElbowPos2 = 0;
+        noTone(buzzer); 
+      }   
+
+      // ----------- Shoulder -----------
+      
+      if(!digitalRead(shoulderSwich1)){
+        stopShoulderPos1 = 1;
+        tone(buzzer, 1950); 
+        Serial.println("shoulderSwich1 on"); 
+      }else{
+        stopShoulderPos1 = 0;
+        noTone(buzzer); 
+      }
+
+      if(!digitalRead(shoulderSwich2)){
+        stopShoulderPos2 = 1;
+        tone(buzzer, 1950); 
+        Serial.println("shoulderSwich2 on"); 
+      }else{
+        stopShoulderPos2 = 0;
+        noTone(buzzer); 
+      }         
     // -------------------------------------
     
     ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
@@ -282,10 +372,9 @@ void loop() {
 
 // ------ stepper motor#1 Base -------
 
-    // ==== Switch 1 ====
+    // ==== baseSwitch1 ====
 
     if(!stopBasePos1){
-
       if((ps2x.Analog(PSS_RX) == 0)){
         if(pssLYUpM2 == 0)
           pssLYUpM2 = 2;        
@@ -295,11 +384,11 @@ void loop() {
         }                
         pos2M2=2;
         rotate(pos2M2, 0.10, 1);
-        Serial.println(pos2M2, DEC);
+        //Serial.println(pos2M2, DEC);
       }        
     }
 
-    // ==== Switch 2 ====
+    // ==== baseSwitch2 ====
 
     if(!stopBasePos2){
       if((ps2x.Analog(PSS_RX) == 255)){
@@ -311,87 +400,100 @@ void loop() {
         }                   
         pos2M2=-2;
         rotate(pos2M2, 0.10, 1);
-        Serial.println(pos2M2, DEC);
+        //Serial.println(pos2M2, DEC);
       }     
     }
-// ------ stepper motor#2 -------
+// ------ stepper motor#2 Shoulder -------
 
-    if((ps2x.Analog(PSS_RY) == 0)){
-      if(pssLYUpM1 == 0)
-        pssLYUpM1 = 1;        
-      if(pos1M1 > 0 && pssLYDownM1 == 1){
-        pos1M1 = 0;
-        pssLYDownM1 = 0;
-      }                
-      pos1M1=1;
-      rotate(pos1M1, 0.20, 2);
-      //Serial.println(pos1M1, DEC);
-    }  
-    
-    if((ps2x.Analog(PSS_RY) == 255)){
-      if(pssLYDownM1 == 0)
-        pssLYDownM1 = 1;
-      if(pos2M1 < 0 && pssLYUpM1 == 1){
-        pos2M1 = 0;
-        pssLYUpM1 = 0;
-      }                   
-      pos2M1=-1;
-      rotate(pos2M1, 0.20, 2);
-      //Serial.println(pos2M1, DEC);
-    }    
+    if(!stopShoulderPos1){
+      if((ps2x.Analog(PSS_RY) == 0)){
+        if(pssLYUpM1 == 0)
+          pssLYUpM1 = 1;        
+        if(pos1M1 > 0 && pssLYDownM1 == 1){
+          pos1M1 = 0;
+          pssLYDownM1 = 0;
+        }                
+        pos1M1=1;
+        rotate(pos1M1, 0.20, 2);
+        //Serial.println("==== PSS_RY 0 ====");
+      }      
+    }
 
-// ------ stepper motor#3  -------
-
-    if((ps2x.Analog(PSS_LX) == 0)){
-      if(pssLYUpM3 == 0)
-        pssLYUpM3 = 1;        
-      if(pos1M3 > 0 && pssLYDownM3 == 1){
-        pos1M3 = 0;
-        pssLYDownM3 = 0;
-      }                
-      pos1M3=1;
-      rotate(pos1M3, 0.20, 3);
-      //Serial.println(pos1M3, DEC);
-    }  
-    
-    if((ps2x.Analog(PSS_LX) == 255)){
-      if(pssLYDownM3 == 0)
-        pssLYDownM3 = 1;
-      if(pos2M3 < 0 && pssLYUpM3 == 1){
-        pos2M3 = 0;
-        pssLYUpM3 = 0;
-      }                   
-      pos2M3=-1;
-      rotate(pos2M3, 0.20, 3);
-      //Serial.println(pos2M3, DEC);
-    }      
-
-// ------ stepper motor#4 -------
-
-    if((ps2x.Analog(PSS_LY) == 0)){
-      if(pssLYUpM4 == 0)
-        pssLYUpM4 = 1;        
-      if(pos1M4 > 0 && pssLYDownM4 == 1){
-        pos1M4 = 0;
-        pssLYDownM4 = 0;
-      }                
-      pos1M4=1;
-      rotate(pos1M4, 0.20, 4);
-      //Serial.println(pos1M4, DEC);
-    }  
-    
-    if((ps2x.Analog(PSS_LY) == 255)){
-      if(pssLYDownM4 == 0)
-        pssLYDownM4 = 1;
-      if(pos2M4 < 0 && pssLYUpM4 == 1){
-        pos2M4 = 0;
-        pssLYUpM4 = 0;
-      }                   
-      pos2M4=-1;
-      rotate(pos2M4, 0.20, 4);
-      //Serial.println(pos2M4, DEC);
+    if(!stopShoulderPos2){
+      if((ps2x.Analog(PSS_RY) == 255)){
+        if(pssLYDownM1 == 0)
+          pssLYDownM1 = 1;
+        if(pos2M1 < 0 && pssLYUpM1 == 1){
+          pos2M1 = 0;
+          pssLYUpM1 = 0;
+        }                   
+        pos2M1=-1;
+        rotate(pos2M1, 0.20, 2);
+        //Serial.println("==== PSS_RY 255 ====");
+      }          
     }
     
+
+
+// ------ stepper motor#3 Elbow -------
+
+    if(!stopElbowPos1){
+      if((ps2x.Analog(PSS_LX) == 0)){
+        if(pssLYUpM3 == 0)
+          pssLYUpM3 = 1;        
+        if(pos1M3 > 0 && pssLYDownM3 == 1){
+          pos1M3 = 0;
+          pssLYDownM3 = 0;
+        }                
+        pos1M3=1;
+        rotate(pos1M3, 0.20, 3);
+        //Serial.println(pos1M3, DEC);
+      }        
+    }
+
+    if(!stopElbowPos2){
+      if((ps2x.Analog(PSS_LX) == 255)){
+        if(pssLYDownM3 == 0)
+          pssLYDownM3 = 1;
+        if(pos2M3 < 0 && pssLYUpM3 == 1){
+          pos2M3 = 0;
+          pssLYUpM3 = 0;
+        }                   
+        pos2M3=-1;
+        rotate(pos2M3, 0.20, 3);
+        //Serial.println(pos2M3, DEC);
+      }            
+    }
+
+// ------ stepper motor#4 wrist-------
+
+    if(!stopWristPos2){
+      if((ps2x.Analog(PSS_LY) == 0)){
+        if(pssLYUpM4 == 0)
+          pssLYUpM4 = 1;        
+        if(pos1M4 > 0 && pssLYDownM4 == 1){
+          pos1M4 = 0;
+          pssLYDownM4 = 0;
+        }                
+        pos1M4=1;
+        rotate(pos1M4, 0.20, 4);
+        //Serial.println(pos1M4, DEC);
+      }        
+    }
+
+    if(!stopWristPos1){
+      if((ps2x.Analog(PSS_LY) == 255)){
+        if(pssLYDownM4 == 0)
+          pssLYDownM4 = 1;
+        if(pos2M4 < 0 && pssLYUpM4 == 1){
+          pos2M4 = 0;
+          pssLYUpM4 = 0;
+        }                   
+        pos2M4=-1;
+        rotate(pos2M4, 0.20, 4);
+        //Serial.println(pos2M4, DEC);
+      }      
+    }
 }
 
 void rotate(int steps, float speed, int motor) {
