@@ -98,6 +98,13 @@ int stopElbowPos2 = 0;
 int stopShoulderPos1 = 0;
 int stopShoulderPos2 = 0;
 
+int homingBase = 0;
+int homingShoulder = 0;
+int homingWrist = 0;
+int homingElbow = 0;
+
+int homing = 0;
+
 void setup(){
 
   pinMode(buzzer, OUTPUT); 
@@ -186,24 +193,76 @@ void loop() {
   if(error == 1) //skip loop if no controller found
     return; 
 
+    // --------- Homing ----------
+
+    if(!homing){
+
+      if(!homingWrist){
+        rotate(-100, 0.10, 4);
+        if(!digitalRead(wristSwich1)){          
+          rotate(500, 0.10, 4);
+          homingWrist = 1;  
+        }
+      }
+
+      if(!homingElbow && homingWrist ){
+        rotate(-100, 0.10, 3);
+        if(!digitalRead(elbowSwich2)){          
+          rotate(500, 0.10, 3);
+          homingElbow = 1;  
+        }
+      }   
+      if(!homingShoulder && homingWrist && homingElbow){
+        rotate(-100, 0.10, 2);
+        if(!digitalRead(shoulderSwich2)){          
+          rotate(1000, 0.10, 2);
+          rotate(1500, 0.10, 4);
+          homingShoulder = 1;  
+        }
+      }
+           
+      if(!homingBase && homingShoulder && homingWrist && homingElbow){
+        rotate(-100, 0.10, 1);
+        if(!digitalRead(baseSwich2)){          
+          rotate(1300, 0.10, 1);
+          homingBase = 1;  
+        }
+      }
+
+
+
+
+
+
+ 
+      
+    }else{ 
+    
+    
+ 
+
+
     // ------------- Switches ---------------
 
       // ----------- Base -----------
       
       if(!digitalRead(baseSwich1)){
         stopBasePos1 = 1;
+
+        if(!homingBase){
+          homingBase = 1;
+        }
         tone(buzzer, 1950); 
-        Serial.println("baseSwich1 on"); 
+        //Serial.println("baseSwich1 on"); 
       }else{
         stopBasePos1 = 0;
-        noTone(buzzer
-        ); 
+        noTone(buzzer); 
       }
 
       if(!digitalRead(baseSwich2)){
         stopBasePos2 = 1;
         tone(buzzer, 1950); 
-        Serial.println("baseSwich2 on"); 
+        //Serial.println("baseSwich2 on"); 
       }else{
         stopBasePos2 = 0;
         noTone(buzzer); 
@@ -214,7 +273,7 @@ void loop() {
       if(!digitalRead(wristSwich1)){
         stopWristPos1 = 1;
         tone(buzzer, 1950); 
-        Serial.println("wristSwich1 on"); 
+        //Serial.println("wristSwich1 on"); 
       }else{
         stopWristPos1 = 0;
         noTone(buzzer); 
@@ -223,7 +282,7 @@ void loop() {
       if(!digitalRead(wristSwich2)){
         stopWristPos2 = 1;
         tone(buzzer, 1950); 
-        Serial.println("wristSwich2 on"); 
+        //Serial.println("wristSwich2 on"); 
       }else{
         stopWristPos2 = 0;
         noTone(buzzer); 
@@ -234,7 +293,7 @@ void loop() {
       if(!digitalRead(elbowSwich1)){
         stopElbowPos1 = 1;
         tone(buzzer, 1950); 
-        Serial.println("elbowSwich1 on"); 
+        //Serial.println("elbowSwich1 on"); 
       }else{
         stopElbowPos1 = 0;
         noTone(buzzer); 
@@ -243,7 +302,7 @@ void loop() {
       if(!digitalRead(elbowSwich2)){
         stopElbowPos2 = 1;
         tone(buzzer, 1950); 
-        Serial.println("elbowSwich2 on"); 
+        //Serial.println("elbowSwich2 on"); 
       }else{
         stopElbowPos2 = 0;
         noTone(buzzer); 
@@ -254,7 +313,7 @@ void loop() {
       if(!digitalRead(shoulderSwich1)){
         stopShoulderPos1 = 1;
         tone(buzzer, 1950); 
-        Serial.println("shoulderSwich1 on"); 
+        //Serial.println("shoulderSwich1 on"); 
       }else{
         stopShoulderPos1 = 0;
         noTone(buzzer); 
@@ -263,7 +322,7 @@ void loop() {
       if(!digitalRead(shoulderSwich2)){
         stopShoulderPos2 = 1;
         tone(buzzer, 1950); 
-        Serial.println("shoulderSwich2 on"); 
+        //Serial.println("shoulderSwich2 on"); 
       }else{
         stopShoulderPos2 = 0;
         noTone(buzzer); 
@@ -276,10 +335,6 @@ void loop() {
       Serial.println("Start is being held");
     if(ps2x.Button(PSB_SELECT))
       Serial.println("Select is being held");     
-
-    // ------------- Init stepper motor ----------
-
-    //rotate(100, 0.10, 1);
 
     // ------------- Servo1 gripper ---------------
     
@@ -493,6 +548,9 @@ void loop() {
         rotate(pos2M4, 0.20, 4);
         //Serial.println(pos2M4, DEC);
       }      
+    }
+
+
     }
 }
 
