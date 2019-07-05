@@ -36,42 +36,9 @@ byte vibrate = 0;
 
 Servo myservo;
 Servo myservo2;
-int pos = 90;
-int pos2 = 90;
-
-int buzzer = 31; 
-
-// ------ stepper motor#1 -------
-# define DIR_PIN_M1 6
-# define STEP_PIN_M1 7
-int pos1M1 = 0;
-int pos2M1 = 0;
-int pssLYDownM1 = 0;
-int pssLYUpM1 = 0;
-
-// ------ stepper motor#2 -------
-# define DIR_PIN_M2 8
-# define STEP_PIN_M2 9
-int pos1M2 = 0;
-int pos2M2 = 0;
-int pssLYDownM2 = 0;
-int pssLYUpM2 = 0;
-
-// ------ stepper motor#3 -------
-# define DIR_PIN_M3 4
-# define STEP_PIN_M3 5
-int pos1M3 = 0;
-int pos2M3 = 0;
-int pssLYDownM3 = 0;
-int pssLYUpM3 = 0;
-
-// ------ stepper motor#4 -------
-# define DIR_PIN_M4 2
-# define STEP_PIN_M4 3
-int pos1M4 = 0;
-int pos2M4 = 0;
-int pssLYDownM4 = 0;
-int pssLYUpM4 = 0;
+int pos;
+int pos2;
+int buzzer; 
 
 # define SERVO_PIN 44
 # define SERVO_PIN2 45
@@ -89,28 +56,90 @@ int pssLYUpM4 = 0;
 #define baseSwich1 42   // switch1
 #define baseSwich2 43   // switch2
 
-int stopBasePos1 = 0;
-int stopBasePos2 = 0;
-int stopWristPos1 = 0;
-int stopWristPos2 = 0;
-int stopElbowPos1 = 0;
-int stopElbowPos2 = 0;
-int stopShoulderPos1 = 0;
-int stopShoulderPos2 = 0;
+// ------ stepper motor#1 -------
+# define DIR_PIN_M1 6
+# define STEP_PIN_M1 7
+int pos1M1;
+int pos2M1;
+int pssLYDownM1;
+int pssLYUpM1;
 
-int homingBase = 0;
-int homingShoulder = 0;
-int homingWrist = 0;
-int homingElbow = 0;
+// ------ stepper motor#2 -------
+# define DIR_PIN_M2 8
+# define STEP_PIN_M2 9
+int pos1M2;
+int pos2M2;
+int pssLYDownM2;
+int pssLYUpM2;
 
-int homing = 0;
+// ------ stepper motor#3 -------
+# define DIR_PIN_M3 4
+# define STEP_PIN_M3 5
+int pos1M3;
+int pos2M3;
+int pssLYDownM3;
+int pssLYUpM3;
+
+// ------ stepper motor#4 -------
+# define DIR_PIN_M4 2
+# define STEP_PIN_M4 3
+int pos1M4;
+int pos2M4;
+int pssLYDownM4;
+int pssLYUpM4;
+
+int stopBasePos1;
+int stopBasePos2;
+int stopWristPos1;
+int stopWristPos2;
+int stopElbowPos1;
+int stopElbowPos2;
+int stopShoulderPos1;
+int stopShoulderPos2;
+
+int homingBase;
+int homingShoulder;
+int homingWrist;
+int homingElbow;
+
+int homing;
+int rotateTest;
 
 void setup(){
 
+  // ------ Initialize values ----------
+    pos1M4 = 0;
+    pos2M4 = 0;
+    pssLYDownM4 = 0;
+    pssLYUpM4 = 0;
+    
+    stopBasePos1 = 0;
+    stopBasePos2 = 0;
+    stopWristPos1 = 0;
+    stopWristPos2 = 0;
+    stopElbowPos1 = 0;
+    stopElbowPos2 = 0;
+    stopShoulderPos1 = 0;
+    stopShoulderPos2 = 0;
+    
+    homingBase = 0;
+    homingShoulder = 0;
+    homingWrist = 0;
+    homingElbow = 0;
+    
+    homing = 0;
+    rotateTest = 0;
+
+    // ---- servo ----
+    pos = 90;
+    pos2 = 90;
+    buzzer = 31; 
+  //---------------------------------   
+  
   pinMode(buzzer, OUTPUT); 
   noTone(buzzer); 
-
-// ------ Switch pins ---------
+  
+  // ------ Switch pins ---------
   pinMode(shoulderSwich1, INPUT_PULLUP); 
   pinMode(shoulderSwich2, INPUT_PULLUP); 
   pinMode(elbowSwich1, INPUT_PULLUP); 
@@ -119,16 +148,16 @@ void setup(){
   pinMode(baseSwich2, INPUT_PULLUP); 
   pinMode(wristSwich1, INPUT_PULLUP); 
   pinMode(wristSwich2, INPUT_PULLUP); 
-// ----------------------------
+  // ----------------------------
 
-// ------ servo motor -------
+  // ------ servo motor -------
   pinMode(SERVO_PIN, OUTPUT);
   pinMode(SERVO_PIN2, OUTPUT);
   myservo.attach(SERVO_PIN);
   myservo2.attach(SERVO_PIN2);
-// -------------------------
+  // -------------------------
 
-// ------ stepper motor -------
+  // ------ stepper motor -------
   pinMode(DIR_PIN_M1, OUTPUT);
   pinMode(STEP_PIN_M1, OUTPUT);
   pinMode(DIR_PIN_M2, OUTPUT);
@@ -137,8 +166,8 @@ void setup(){
   pinMode(STEP_PIN_M3, OUTPUT);
   pinMode(DIR_PIN_M4, OUTPUT);
   pinMode(STEP_PIN_M4, OUTPUT);
-// -------------------------
-  
+  // -------------------------
+
   Serial.begin(9600);
 
   //setup pins and settings: GamePad(clock, command, attention, data, Pressures?, Rumble?) check for error
@@ -226,21 +255,24 @@ void loop() {
         if(!digitalRead(baseSwich2)){          
           rotate(1300, 0.10, 1);
           homingBase = 1;  
+          homing = 1;
         }
       }
 
 
+// ------------- Move 2 motors at the same time ------------
 
+//      if(!rotateTest && homingBase && homingShoulder && homingWrist && homingElbow){
+//           int count = 900;
+//           while(count > 0){            
+//             rotate(-1, 0.20, 2);
+//             rotate(-1, 0.20, 4); 
+//             count--;       
+//           }
+//           rotateTest = 1;
+//      }
 
-
-
- 
-      
     }else{ 
-    
-    
- 
-
 
     // ------------- Switches ---------------
 
@@ -391,7 +423,6 @@ void loop() {
         Serial.println("Triangle pressed");        
     }
 
-
     if(ps2x.ButtonPressed(PSB_CIRCLE))               //will be TRUE if button was JUST pressed
       Serial.println("Circle just pressed");
     if(ps2x.NewButtonState(PSB_CROSS))               //will be TRUE if button was JUST pressed OR released
@@ -421,11 +452,8 @@ void loop() {
 //    if((ps2x.Analog(PSS_RX) == 255))
 //      Serial.println("Stick Values PSS_RX: 255");
 
-// ------------------------------------------
 
-
-
-// ------ stepper motor#1 Base -------
+    // ------ stepper motor#1 Base -------
 
     // ==== baseSwitch1 ====
 
@@ -458,7 +486,8 @@ void loop() {
         //Serial.println(pos2M2, DEC);
       }     
     }
-// ------ stepper motor#2 Shoulder -------
+    
+    // ------ stepper motor#2 Shoulder -------
 
     if(!stopShoulderPos1){
       if((ps2x.Analog(PSS_RY) == 0)){
@@ -487,10 +516,8 @@ void loop() {
         //Serial.println("==== PSS_RY 255 ====");
       }          
     }
-    
 
-
-// ------ stepper motor#3 Elbow -------
+    // ------ stepper motor#3 Elbow -------
 
     if(!stopElbowPos1){
       if((ps2x.Analog(PSS_LX) == 0)){
@@ -520,7 +547,7 @@ void loop() {
       }            
     }
 
-// ------ stepper motor#4 wrist-------
+    // ------ stepper motor#4 wrist-------
 
     if(!stopWristPos2){
       if((ps2x.Analog(PSS_LY) == 0)){
