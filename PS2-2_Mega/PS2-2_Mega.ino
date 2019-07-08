@@ -1,5 +1,4 @@
 #include <PS2X_lib.h>  //for v1.6
-
 #include <Servo.h>
 
 /******************************************************************
@@ -56,6 +55,12 @@ int buzzer;
 #define baseSwich1 42   // switch1
 #define baseSwich2 43   // switch2
 
+#define HOMING_ACTION 1   
+#define PLAY_ACTION 2   
+
+#define BUTTON_NOT_PRESSED 1
+#define BUTTON_PRESSED 2
+
 // ------ stepper motor#1 -------
 # define DIR_PIN_M1 6
 # define STEP_PIN_M1 7
@@ -97,6 +102,11 @@ int stopElbowPos2;
 int stopShoulderPos1;
 int stopShoulderPos2;
 
+//int basePos;
+//int shoulderPos;
+//int elbowPos;
+//int wristPos;
+
 int homingBase;
 int homingShoulder;
 int homingWrist;
@@ -104,37 +114,67 @@ int homingElbow;
 
 int homing;
 int rotateTest;
+int posIndex;
+int steps;
+int play;
+int playSequence;
+int buttonState;
+int countSteps;
+// ----------------------------
+
+typedef struct {
+   int number;
+   int steps;
+   float speed;
+} Motors[250];
+
+Motors motor;
+
+// ----------------------------
 
 void setup(){
 
   // ------ Initialize values ----------
-    pos1M4 = 0;
-    pos2M4 = 0;
-    pssLYDownM4 = 0;
-    pssLYUpM4 = 0;
-    
-    stopBasePos1 = 0;
-    stopBasePos2 = 0;
-    stopWristPos1 = 0;
-    stopWristPos2 = 0;
-    stopElbowPos1 = 0;
-    stopElbowPos2 = 0;
-    stopShoulderPos1 = 0;
-    stopShoulderPos2 = 0;
-    
-    homingBase = 0;
-    homingShoulder = 0;
-    homingWrist = 0;
-    homingElbow = 0;
-    
-    homing = 0;
-    rotateTest = 0;
+  pos1M4 = 0;
+  pos2M4 = 0;
+  pssLYDownM4 = 0;
+  pssLYUpM4 = 0;
+  
+  stopBasePos1 = 0;
+  stopBasePos2 = 0;
+  stopWristPos1 = 0;
+  stopWristPos2 = 0;
+  stopElbowPos1 = 0;
+  stopElbowPos2 = 0;
+  stopShoulderPos1 = 0;
+  stopShoulderPos2 = 0;
 
-    // ---- servo ----
-    pos = 90;
-    pos2 = 90;
-    buzzer = 31; 
+  homingBase = 0;
+  homingShoulder = 0;
+  homingWrist = 0;
+  homingElbow = 0;
+  
+//  basePos = 0;
+//  shoulderPos = 0;
+//  elbowPos = 0;
+//  wristPos =0;
+  
+  homing = 0;
+  rotateTest = 0;
+  posIndex = 0;
+  steps = 0;
+  countSteps = 0;
+  
+  // ---- servo ----
+  pos = 90;
+  pos2 = 90;
+  buzzer = 31; 
+  // ---------------
+  play = 0;
+  playSequence = 0;
   //---------------------------------   
+
+  buttonState = BUTTON_NOT_PRESSED;
   
   pinMode(buzzer, OUTPUT); 
   noTone(buzzer); 
@@ -168,7 +208,8 @@ void setup(){
   pinMode(STEP_PIN_M4, OUTPUT);
   // -------------------------
 
-  Serial.begin(9600);
+//  Serial.begin(9600);
+  Serial.begin(19200);
 
   //setup pins and settings: GamePad(clock, command, attention, data, Pressures?, Rumble?) check for error
   error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble);
@@ -225,54 +266,26 @@ void loop() {
     // --------- Homing ----------
 
     if(!homing){
+        initMotors(HOMING_ACTION);
+        Serial.println("loop(): HOMING_ACTION ");
+    }
 
-      if(!homingWrist){
-        rotate(-100, 0.10, 4);
-        if(!digitalRead(wristSwich1)){          
-          rotate(500, 0.10, 4);
-          homingWrist = 1;  
+    if(play){
+        initMotors(PLAY_ACTION);
+        Serial.println("loop(): PLAY_ACTION ");
+    }
+
+    if(playSequence){
+
+        for(int i=1 ; i<posIndex+1 ; i++){            
+            Serial.println(motor[i].steps, DEC);                                 
+            rotate(motor[i].steps, motor[i].speed, motor[i].number);
         }
-      }
+                
+        playSequence = 0;        
+    }
 
-      if(!homingElbow && homingWrist ){
-        rotate(-100, 0.10, 3);
-        if(!digitalRead(elbowSwich2)){          
-          rotate(500, 0.10, 3);
-          homingElbow = 1;  
-        }
-      }   
-      if(!homingShoulder && homingWrist && homingElbow){
-        rotate(-100, 0.10, 2);
-        if(!digitalRead(shoulderSwich2)){          
-          rotate(1000, 0.10, 2);
-          rotate(1500, 0.10, 4);
-          homingShoulder = 1;  
-        }
-      }
-           
-      if(!homingBase && homingShoulder && homingWrist && homingElbow){
-        rotate(-100, 0.10, 1);
-        if(!digitalRead(baseSwich2)){          
-          rotate(1300, 0.10, 1);
-          homingBase = 1;  
-          homing = 1;
-        }
-      }
-
-
-// ------------- Move 2 motors at the same time ------------
-
-//      if(!rotateTest && homingBase && homingShoulder && homingWrist && homingElbow){
-//           int count = 900;
-//           while(count > 0){            
-//             rotate(-1, 0.20, 2);
-//             rotate(-1, 0.20, 4); 
-//             count--;       
-//           }
-//           rotateTest = 1;
-//      }
-
-    }else{ 
+    if(homing && !play && !playSequence){ 
 
     // ------------- Switches ---------------
 
@@ -425,49 +438,52 @@ void loop() {
 
     if(ps2x.ButtonPressed(PSB_CIRCLE))               //will be TRUE if button was JUST pressed
       Serial.println("Circle just pressed");
-    if(ps2x.NewButtonState(PSB_CROSS))               //will be TRUE if button was JUST pressed OR released
-      Serial.println("X just changed");
+    
+//    if(ps2x.NewButtonState(PSB_CROSS))               //will be TRUE if button was JUST pressed OR released
+//      Serial.println("X just changed");
+    
+    
     if(ps2x.ButtonReleased(PSB_SQUARE))              //will be TRUE if button was JUST released
       Serial.println("Square just released");     
 
 // ------------------------------------------
 
-//    if((ps2x.Analog(PSS_LY) == 0))
-//      Serial.println("Stick Values PSS_LY: 0");
-//    if((ps2x.Analog(PSS_LY) == 255))
-//      Serial.println("Stick Values PSS_LY: 255");
-//
-//    if((ps2x.Analog(PSS_LX) == 0))
-//      Serial.println("Stick Values PSS_LX: 0");
-//    if((ps2x.Analog(PSS_LX) == 255))
-//      Serial.println("Stick Values PSS_LX: 255");
-//      
-//    if((ps2x.Analog(PSS_RY) == 0))
-//      Serial.println("Stick Values PSS_RY: 0");
-//    if((ps2x.Analog(PSS_RY) == 255))
-//      Serial.println("Stick Values PSS_RY: 255");
-//
-//    if((ps2x.Analog(PSS_RX) == 0))
-//      Serial.println("Stick Values PSS_RX: 0");
-//    if((ps2x.Analog(PSS_RX) == 255))
-//      Serial.println("Stick Values PSS_RX: 255");
 
 
+    // ------ Play sample --------
+
+    if(ps2x.NewButtonState(PSB_CROSS)){
+        if(buttonState == BUTTON_NOT_PRESSED){
+          play = 1;                  
+          buttonState = BUTTON_PRESSED;
+          Serial.println("Play...");
+        }       
+    }
+    
     // ------ stepper motor#1 Base -------
 
     // ==== baseSwitch1 ====
 
     if(!stopBasePos1){
       if((ps2x.Analog(PSS_RX) == 0)){
-        if(pssLYUpM2 == 0)
-          pssLYUpM2 = 2;        
-        if(pos2M2 > 0 && pssLYDownM2 == 2){
+        if(pssLYUpM2 == 0){
+          pssLYUpM2 = 1;     
+          posIndex++;
+          motor[posIndex].number = 1;          
+          motor[posIndex].speed = 0.10;    
+          countSteps = 0;      
+        }                
+        if(pos2M2 > 0 && pssLYDownM2 == 1){
           pos2M2 = 0;
           pssLYDownM2 = 0;
         }                
-        pos2M2=2;
+        pos2M2=1;
+        countSteps++;        
+        motor[posIndex].steps = countSteps;        
         rotate(pos2M2, 0.10, 1);
-        //Serial.println(pos2M2, DEC);
+        
+//        Serial.println(countSteps, DEC);
+//        Serial.println(posIndex, DEC);
       }        
     }
 
@@ -475,15 +491,25 @@ void loop() {
 
     if(!stopBasePos2){
       if((ps2x.Analog(PSS_RX) == 255)){
-        if(pssLYDownM2 == 0)
-          pssLYDownM2 = 2;
-        if(pos2M2 < 0 && pssLYUpM2 == 2){
+        if(pssLYDownM2 == 0){
+          pssLYDownM2 = 1;
+          posIndex++;
+          motor[posIndex].number = 1;          
+          motor[posIndex].speed = 0.10;                     
+          countSteps = 0; 
+        }          
+        if(pos2M2 < 0 && pssLYUpM2 == 1){
           pos2M2 = 0;
           pssLYUpM2 = 0;
         }                   
-        pos2M2=-2;
+        pos2M2=-1;
+        countSteps--; 
+        //basePos += pos2M2;
+        motor[posIndex].steps = countSteps;  
         rotate(pos2M2, 0.10, 1);
-        //Serial.println(pos2M2, DEC);
+    
+//        Serial.println(countSteps, DEC);
+//          Serial.println(posIndex, DEC);
       }     
     }
     
@@ -580,6 +606,68 @@ void loop() {
 
     }
 }
+
+// ---------------------------------
+
+void initMotors(int action){
+
+    // --------- Homing ----------
+
+      if(!homingWrist){
+        rotate(-100, 0.10, 4);
+        if(!digitalRead(wristSwich1)){          
+          rotate(500, 0.10, 4);
+          homingWrist = 1;  
+        }
+      }
+      
+      if(!homingElbow && homingWrist ){
+        rotate(-100, 0.10, 3);
+        if(!digitalRead(elbowSwich2)){          
+          rotate(500, 0.10, 3);
+          homingElbow = 1;  
+        }
+      }
+         
+      if(!homingShoulder && homingWrist && homingElbow){
+        rotate(-100, 0.10, 2);
+        if(!digitalRead(shoulderSwich2)){          
+          rotate(1000, 0.10, 2);
+         // rotate(1500, 0.10, 4);
+          homingShoulder = 1;  
+        }
+      }
+           
+      if(!homingBase && homingShoulder && homingWrist && homingElbow){
+        rotate(-100, 0.10, 1);
+        if(!digitalRead(baseSwich2)){          
+          rotate(1300, 0.10, 1);
+          //rotate(2300, 0.10, 1);
+          homingBase = 1;            
+        }
+      }  
+
+      if(homingBase && homingShoulder && homingWrist && homingElbow){
+        homingWrist = 0;  
+        homingElbow = 0;  
+        homingShoulder = 0;             
+        homingBase = 0;  
+
+        if(action == HOMING_ACTION){  // Homing
+          homing = 1;        
+          Serial.println("=== HOMING_ACTION ===");
+        }
+          
+        if(action == PLAY_ACTION){          // play sequence
+          play = 0;        
+          playSequence = 1;
+          Serial.println("=== PLAY_ACTION ===");
+        }           
+      }
+
+}
+
+// ---------------------------------
 
 void rotate(int steps, float speed, int motor) {
   //rotate a specific number of microsteps (8 microsteps per step) – (negitive for reverse movement)
