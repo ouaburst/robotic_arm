@@ -102,11 +102,6 @@ int stopElbowPos2;
 int stopShoulderPos1;
 int stopShoulderPos2;
 
-//int basePos;
-//int shoulderPos;
-//int elbowPos;
-//int wristPos;
-
 int homingBase;
 int homingShoulder;
 int homingWrist;
@@ -153,12 +148,7 @@ void setup(){
   homingShoulder = 0;
   homingWrist = 0;
   homingElbow = 0;
-  
-//  basePos = 0;
-//  shoulderPos = 0;
-//  elbowPos = 0;
-//  wristPos =0;
-  
+
   homing = 0;
   rotateTest = 0;
   posIndex = 0;
@@ -276,12 +266,13 @@ void loop() {
     }
 
     if(playSequence){
-
+        delay(1000); 
         for(int i=1 ; i<posIndex+1 ; i++){            
             Serial.println(motor[i].steps, DEC);                                 
             rotate(motor[i].steps, motor[i].speed, motor[i].number);
         }
-                
+        
+        //buttonState = BUTTON_NOT_PRESSED;
         playSequence = 0;        
     }
 
@@ -418,48 +409,43 @@ void loop() {
 
     // ------------------ End servo ----------------------
 
-    vibrate = ps2x.Analog(PSAB_CROSS);  //this will set the large motor vibrate speed based on how hard you press the blue (X) button
-    if (ps2x.NewButtonState()) {        //will be TRUE if any button changes state (on to off, or off to on)
-      if(ps2x.Button(PSB_L3))
-        Serial.println("L3 pressed");
-      if(ps2x.Button(PSB_R3))
-        Serial.println("R3 pressed");
-      if(ps2x.Button(PSB_L2))
-        Serial.println("L2 pressed");
-      if(ps2x.Button(PSB_R2))
-        Serial.println("R2 pressed");
-     
-       if(ps2x.Button(PSB_L1))
-        Serial.println("L1 pressed");
-             
-      if(ps2x.Button(PSB_TRIANGLE))
-        Serial.println("Triangle pressed");        
-    }
-
-    if(ps2x.ButtonPressed(PSB_CIRCLE))               //will be TRUE if button was JUST pressed
-      Serial.println("Circle just pressed");
-    
+//    vibrate = ps2x.Analog(PSAB_CROSS);  //this will set the large motor vibrate speed based on how hard you press the blue (X) button
+//    if (ps2x.NewButtonState()) {        //will be TRUE if any button changes state (on to off, or off to on)
+//      if(ps2x.Button(PSB_L3))
+//        Serial.println("L3 pressed");
+//      if(ps2x.Button(PSB_R3))
+//        Serial.println("R3 pressed");
+//      if(ps2x.Button(PSB_L2))
+//        Serial.println("L2 pressed");
+//      if(ps2x.Button(PSB_R2))
+//        Serial.println("R2 pressed");
+//     
+//       if(ps2x.Button(PSB_L1))
+//        Serial.println("L1 pressed");
+//             
+//      if(ps2x.Button(PSB_TRIANGLE))
+//        Serial.println("Triangle pressed");   
+//  
+//    }
+//
+//    if(ps2x.ButtonPressed(PSB_CIRCLE))               //will be TRUE if button was JUST pressed
+//      Serial.println("Circle just pressed");
+//    
 //    if(ps2x.NewButtonState(PSB_CROSS))               //will be TRUE if button was JUST pressed OR released
-//      Serial.println("X just changed");
-    
-    
-    if(ps2x.ButtonReleased(PSB_SQUARE))              //will be TRUE if button was JUST released
-      Serial.println("Square just released");     
+//      Serial.println("X just changed");    
+//    
+//    if(ps2x.ButtonReleased(PSB_SQUARE))              //will be TRUE if button was JUST released
+//      Serial.println("Square just released");     
 
-// ------------------------------------------
-
-
+  // ------------------------------------------
 
     // ------ Play sample --------
-
-    if(ps2x.NewButtonState(PSB_CROSS)){
-        if(buttonState == BUTTON_NOT_PRESSED){
-          play = 1;                  
-          buttonState = BUTTON_PRESSED;
-          Serial.println("Play...");
-        }       
-    }
     
+      if(ps2x.ButtonPressed(PSB_CIRCLE)){
+            play = 1;                              
+            Serial.println("Play...");            
+      }       
+ 
     // ------ stepper motor#1 Base -------
 
     // ==== baseSwitch1 ====
@@ -504,7 +490,6 @@ void loop() {
         }                   
         pos2M2=-1;
         countSteps--; 
-        //basePos += pos2M2;
         motor[posIndex].steps = countSteps;  
         rotate(pos2M2, 0.10, 1);
     
@@ -517,62 +502,122 @@ void loop() {
 
     if(!stopShoulderPos1){
       if((ps2x.Analog(PSS_RY) == 0)){
-        if(pssLYUpM1 == 0)
-          pssLYUpM1 = 1;        
+        if(pssLYUpM1 == 0){
+          pssLYUpM1 = 1;  
+          posIndex++;
+          motor[posIndex].number = 2;          
+          motor[posIndex].speed = 0.10;    
+          countSteps = 0;  
+        }                   
         if(pos1M1 > 0 && pssLYDownM1 == 1){
           pos1M1 = 0;
           pssLYDownM1 = 0;
         }                
         pos1M1=1;
-        rotate(pos1M1, 0.20, 2);
+        countSteps++;        
+        motor[posIndex].steps = countSteps;          
+        rotate(pos1M1, 0.10, 2);
         //Serial.println("==== PSS_RY 0 ====");
       }      
     }
 
     if(!stopShoulderPos2){
       if((ps2x.Analog(PSS_RY) == 255)){
-        if(pssLYDownM1 == 0)
+        if(pssLYDownM1 == 0){
           pssLYDownM1 = 1;
+          posIndex++;
+          motor[posIndex].number = 2;          
+          motor[posIndex].speed = 0.10;    
+          countSteps = 0;
+        }                             
         if(pos2M1 < 0 && pssLYUpM1 == 1){
           pos2M1 = 0;
           pssLYUpM1 = 0;
         }                   
         pos2M1=-1;
-        rotate(pos2M1, 0.20, 2);
+        countSteps--;        
+        motor[posIndex].steps = countSteps;                  
+        rotate(pos2M1, 0.10, 2);
         //Serial.println("==== PSS_RY 255 ====");
       }          
     }
-
+    
     // ------ stepper motor#3 Elbow -------
+
+//    if(!stopElbowPos1){
+//      if((ps2x.Analog(PSS_LX) == 0)){
+//        if(pssLYUpM3 == 0)
+//          pssLYUpM3 = 1;        
+//        if(pos1M3 > 0 && pssLYDownM3 == 1){
+//          pos1M3 = 0;
+//          pssLYDownM3 = 0;
+//        }                
+//        pos1M3=1;
+//        rotate(pos1M3, 0.20, 3);
+//        //Serial.println(pos1M3, DEC);
+//      }        
+//    }
+//
+//    if(!stopElbowPos2){
+//      if((ps2x.Analog(PSS_LX) == 255)){
+//        if(pssLYDownM3 == 0)
+//          pssLYDownM3 = 1;
+//        if(pos2M3 < 0 && pssLYUpM3 == 1){
+//          pos2M3 = 0;
+//          pssLYUpM3 = 0;
+//        }                   
+//        pos2M3=-1;
+//        rotate(pos2M3, 0.20, 3);
+//        //Serial.println(pos2M3, DEC);
+//      }            
+//    }
 
     if(!stopElbowPos1){
       if((ps2x.Analog(PSS_LX) == 0)){
-        if(pssLYUpM3 == 0)
+        if(pssLYUpM3 == 0){
           pssLYUpM3 = 1;        
+          posIndex++;
+          motor[posIndex].number = 3;          
+          motor[posIndex].speed = 0.10;    
+          countSteps = 0;                
+        }
         if(pos1M3 > 0 && pssLYDownM3 == 1){
           pos1M3 = 0;
           pssLYDownM3 = 0;
         }                
         pos1M3=1;
-        rotate(pos1M3, 0.20, 3);
-        //Serial.println(pos1M3, DEC);
+        countSteps++;        
+        motor[posIndex].steps = countSteps;                
+        rotate(pos1M3, 0.10, 3);
+        
+        Serial.println(countSteps, DEC);
+        Serial.println(posIndex, DEC);
       }        
     }
 
     if(!stopElbowPos2){
       if((ps2x.Analog(PSS_LX) == 255)){
-        if(pssLYDownM3 == 0)
+        if(pssLYDownM3 == 0){
           pssLYDownM3 = 1;
+          posIndex++;
+          motor[posIndex].number = 3;          
+          motor[posIndex].speed = 0.10;    
+          countSteps = 0;                          
+        }
         if(pos2M3 < 0 && pssLYUpM3 == 1){
           pos2M3 = 0;
           pssLYUpM3 = 0;
         }                   
         pos2M3=-1;
-        rotate(pos2M3, 0.20, 3);
-        //Serial.println(pos2M3, DEC);
+        countSteps--;        
+        motor[posIndex].steps = countSteps;                        
+        rotate(pos2M3, 0.10, 3);
+
+        Serial.println(countSteps, DEC);
+        Serial.println(posIndex, DEC);
+
       }            
     }
-
     // ------ stepper motor#4 wrist-------
 
     if(!stopWristPos2){
