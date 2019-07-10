@@ -58,9 +58,6 @@ int buzzer;
 #define HOMING_ACTION 1   
 #define PLAY_ACTION 2   
 
-#define BUTTON_NOT_PRESSED 1
-#define BUTTON_PRESSED 2
-
 // ------ stepper motor#1 -------
 # define DIR_PIN_M1 6
 # define STEP_PIN_M1 7
@@ -108,12 +105,10 @@ int homingWrist;
 int homingElbow;
 
 int homing;
-int rotateTest;
 int posIndex;
 int steps;
 int play;
 int playSequence;
-int buttonState;
 int countSteps;
 // ----------------------------
 
@@ -150,7 +145,6 @@ void setup(){
   homingElbow = 0;
 
   homing = 0;
-  rotateTest = 0;
   posIndex = 0;
   steps = 0;
   countSteps = 0;
@@ -163,8 +157,6 @@ void setup(){
   play = 0;
   playSequence = 0;
   //---------------------------------   
-
-  buttonState = BUTTON_NOT_PRESSED;
   
   pinMode(buzzer, OUTPUT); 
   noTone(buzzer); 
@@ -272,7 +264,6 @@ void loop() {
             rotate(motor[i].steps, motor[i].speed, motor[i].number);
         }
         
-        //buttonState = BUTTON_NOT_PRESSED;
         playSequence = 0;        
     }
 
@@ -590,8 +581,8 @@ void loop() {
         motor[posIndex].steps = countSteps;                
         rotate(pos1M3, 0.10, 3);
         
-        Serial.println(countSteps, DEC);
-        Serial.println(posIndex, DEC);
+//        Serial.println(countSteps, DEC);
+//        Serial.println(posIndex, DEC);
       }        
     }
 
@@ -613,40 +604,81 @@ void loop() {
         motor[posIndex].steps = countSteps;                        
         rotate(pos2M3, 0.10, 3);
 
-        Serial.println(countSteps, DEC);
-        Serial.println(posIndex, DEC);
+//        Serial.println(countSteps, DEC);
+//        Serial.println(posIndex, DEC);
 
       }            
     }
     // ------ stepper motor#4 wrist-------
-
     if(!stopWristPos2){
       if((ps2x.Analog(PSS_LY) == 0)){
-        if(pssLYUpM4 == 0)
+        if(pssLYUpM4 == 0){
           pssLYUpM4 = 1;        
+          posIndex++;
+          motor[posIndex].number = 4;          
+          motor[posIndex].speed = 0.10;    
+          countSteps = 0;                          
+        }         
         if(pos1M4 > 0 && pssLYDownM4 == 1){
           pos1M4 = 0;
           pssLYDownM4 = 0;
         }                
         pos1M4=1;
-        rotate(pos1M4, 0.20, 4);
+        countSteps++;        
+        motor[posIndex].steps = countSteps;                                
+        rotate(pos1M4, 0.10, 4);
         //Serial.println(pos1M4, DEC);
       }        
     }
 
     if(!stopWristPos1){
       if((ps2x.Analog(PSS_LY) == 255)){
-        if(pssLYDownM4 == 0)
+        if(pssLYDownM4 == 0){
           pssLYDownM4 = 1;
+          posIndex++;
+          motor[posIndex].number = 4;          
+          motor[posIndex].speed = 0.10;    
+          countSteps = 0;                                    
+        }          
         if(pos2M4 < 0 && pssLYUpM4 == 1){
           pos2M4 = 0;
           pssLYUpM4 = 0;
         }                   
         pos2M4=-1;
-        rotate(pos2M4, 0.20, 4);
+        countSteps--;        
+        motor[posIndex].steps = countSteps;                                        
+        rotate(pos2M4, 0.10, 4);
         //Serial.println(pos2M4, DEC);
       }      
     }
+
+//    if(!stopWristPos2){
+//      if((ps2x.Analog(PSS_LY) == 0)){
+//        if(pssLYUpM4 == 0)
+//          pssLYUpM4 = 1;        
+//        if(pos1M4 > 0 && pssLYDownM4 == 1){
+//          pos1M4 = 0;
+//          pssLYDownM4 = 0;
+//        }                
+//        pos1M4=1;
+//        rotate(pos1M4, 0.20, 4);
+//        //Serial.println(pos1M4, DEC);
+//      }        
+//    }
+//
+//    if(!stopWristPos1){
+//      if((ps2x.Analog(PSS_LY) == 255)){
+//        if(pssLYDownM4 == 0)
+//          pssLYDownM4 = 1;
+//        if(pos2M4 < 0 && pssLYUpM4 == 1){
+//          pos2M4 = 0;
+//          pssLYUpM4 = 0;
+//        }                   
+//        pos2M4=-1;
+//        rotate(pos2M4, 0.20, 4);
+//        //Serial.println(pos2M4, DEC);
+//      }      
+//    }
 
 
     }
