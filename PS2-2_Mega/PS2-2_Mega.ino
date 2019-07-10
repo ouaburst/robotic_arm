@@ -278,9 +278,7 @@ void loop() {
     }
     
     if(playSequence){
-
-        delay(1000); 
-        
+        delay(1000);         
         for(int i=1 ; i<posIndex+1 ; i++){            
 
             Serial.println(motor[i].steps, DEC);                                 
@@ -291,14 +289,18 @@ void loop() {
             
             if(motor[i].type == SERVO_MOTOR){
 
-              if(motor[i].number == 5){
-                myservo.write(motor[i].steps);
-                delay(motor[i].speed);                  
+              if(motor[i].number == 5){                
+                for(int j1=0 ; j1<motor[i].steps; j1++){
+                  myservo.write(j1);
+                  delay(motor[i].speed);                                    
+                }                
               }
 
               if(motor[i].number == 6){
-                myservo2.write(motor[i].steps);
-                delay(motor[i].speed);                  
+                for(int j2=0 ; j2<motor[i].steps; j2++){
+                  myservo2.write(j2);
+                  delay(motor[i].speed);                                    
+                }
               }              
             }
         }
@@ -418,10 +420,9 @@ void loop() {
           motor[posIndex].type = SERVO_MOTOR;   
           gripperServoRotateDir1 = 1;
           gripperServoRotateDir2 = 0;
-        }
-                
+        }        
         servoPos -= 1;
-        motor[posIndex].steps = servoPos;          
+        motor[posIndex].steps = servoPos;       
         myservo.write(servoPos);
         delay(5);  
       }
@@ -437,9 +438,8 @@ void loop() {
           gripperServoRotateDir2 = 1;
           gripperServoRotateDir1 = 0;
         }
-        
         servoPos += 1;
-        motor[posIndex].steps = servoPos;          
+        motor[posIndex].steps = servoPos;                  
         myservo.write(servoPos);
         delay(5); 
       }
@@ -459,8 +459,7 @@ void loop() {
           motor[posIndex].type = SERVO_MOTOR;   
           wristServoRotateDir1 = 1;
           wristServoRotateDir2 = 0;
-        }
-        
+        }        
         servoPos2 -= 1;
         motor[posIndex].steps = servoPos2;                  
         myservo2.write(servoPos2);
@@ -478,8 +477,7 @@ void loop() {
           motor[posIndex].type = SERVO_MOTOR;   
           wristServoRotateDir2 = 1;
           wristServoRotateDir1 = 0;
-        }
-        
+        }        
         servoPos2 += 1;
         motor[posIndex].steps = servoPos2;                          
         myservo2.write(servoPos2);
@@ -626,36 +624,6 @@ void loop() {
       }          
     }
     
-    // ------ stepper motor#3 Elbow -------
-
-//    if(!stopElbowPos1){
-//      if((ps2x.Analog(PSS_LX) == 0)){
-//        if(pssLYUpM3 == 0)
-//          pssLYUpM3 = 1;        
-//        if(pos1M3 > 0 && pssLYDownM3 == 1){
-//          pos1M3 = 0;
-//          pssLYDownM3 = 0;
-//        }                
-//        pos1M3=1;
-//        rotate(pos1M3, 0.20, 3);
-//        //Serial.println(pos1M3, DEC);
-//      }        
-//    }
-//
-//    if(!stopElbowPos2){
-//      if((ps2x.Analog(PSS_LX) == 255)){
-//        if(pssLYDownM3 == 0)
-//          pssLYDownM3 = 1;
-//        if(pos2M3 < 0 && pssLYUpM3 == 1){
-//          pos2M3 = 0;
-//          pssLYUpM3 = 0;
-//        }                   
-//        pos2M3=-1;
-//        rotate(pos2M3, 0.20, 3);
-//        //Serial.println(pos2M3, DEC);
-//      }            
-//    }
-
     if(!stopElbowPos1){
       if((ps2x.Analog(PSS_LX) == 0)){
         if(pssLYUpM3 == 0){
@@ -748,36 +716,6 @@ void loop() {
         //Serial.println(pos2M4, DEC);
       }      
     }
-
-//    if(!stopWristPos2){
-//      if((ps2x.Analog(PSS_LY) == 0)){
-//        if(pssLYUpM4 == 0)
-//          pssLYUpM4 = 1;        
-//        if(pos1M4 > 0 && pssLYDownM4 == 1){
-//          pos1M4 = 0;
-//          pssLYDownM4 = 0;
-//        }                
-//        pos1M4=1;
-//        rotate(pos1M4, 0.20, 4);
-//        //Serial.println(pos1M4, DEC);
-//      }        
-//    }
-//
-//    if(!stopWristPos1){
-//      if((ps2x.Analog(PSS_LY) == 255)){
-//        if(pssLYDownM4 == 0)
-//          pssLYDownM4 = 1;
-//        if(pos2M4 < 0 && pssLYUpM4 == 1){
-//          pos2M4 = 0;
-//          pssLYUpM4 = 0;
-//        }                   
-//        pos2M4=-1;
-//        rotate(pos2M4, 0.20, 4);
-//        //Serial.println(pos2M4, DEC);
-//      }      
-//    }
-
-
     }
 }
 
@@ -837,8 +775,21 @@ void initMotors(int action){
           playSequence = 1;
           Serial.println("=== PLAY_ACTION ===");
         }           
-      }
 
+        //---------------------------------
+        // --------- Init servos ----------
+        //---------------------------------
+  
+        for(int i=0 ; i<servoPos; i++){
+          myservo.write(i);
+          delay(5);                                    
+        }                
+  
+        for(int i=0 ; i<servoPos2;  i++){
+          myservo2.write(i);
+          delay(5);                                    
+        }                      
+      }
 }
 
 // ---------------------------------
