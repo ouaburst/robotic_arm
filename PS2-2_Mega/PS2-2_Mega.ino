@@ -53,6 +53,8 @@ byte vibrate = 0;
 #define PLAY_ACTION 2   
 #define STEP_MOTOR 1
 #define SERVO_MOTOR 2
+#define DIR1 1      // servo pos ++
+#define DIR2 2      // servo pos --
 
 // ------ stepper motor#1 -------
 # define DIR_PIN_M1 6
@@ -99,8 +101,6 @@ int homingBase;
 int homingShoulder;
 int homingWrist;
 int homingElbow;
-
-int homing;
 int posIndex;
 int steps;
 int play;
@@ -125,14 +125,17 @@ typedef struct {
    int number;
    int steps;
    float speed;
-   int type;
-} Motors[250];
+   int type;            // type servo, stepper
+   int dir=0;           // dir. Used only for servo,
+} Motors[250];          // dir=DIR1 add (++), dir=DIR2 substract (--)
 
 Motors motor;
 
+int testLoop;
+
 // ----------------------------
 
-void setup(){
+void setup(){  
 
   // ------ Initialize values ----------
   pos1M4 = 0;
@@ -154,7 +157,6 @@ void setup(){
   homingWrist = 0;
   homingElbow = 0;
 
-  homing = 0;
   posIndex = 0;
   steps = 0;
   countSteps = 0;
@@ -170,42 +172,8 @@ void setup(){
   // ---------------
   play = 0;
   playSequence = 0;
-  //---------------------------------   
-  
-  pinMode(buzzer, OUTPUT); 
-  noTone(buzzer); 
-  
-  // ------ Switch pins ---------
-  pinMode(shoulderSwich1, INPUT_PULLUP); 
-  pinMode(shoulderSwich2, INPUT_PULLUP); 
-  pinMode(elbowSwich1, INPUT_PULLUP); 
-  pinMode(elbowSwich2, INPUT_PULLUP); 
-  pinMode(baseSwich1, INPUT_PULLUP); 
-  pinMode(baseSwich2, INPUT_PULLUP); 
-  pinMode(wristSwich1, INPUT_PULLUP); 
-  pinMode(wristSwich2, INPUT_PULLUP); 
-  // ----------------------------
 
-  // ------ servo motor -------
-  pinMode(SERVO_PIN, OUTPUT);
-  pinMode(SERVO_PIN2, OUTPUT);
-  myservo.attach(SERVO_PIN);
-  myservo2.attach(SERVO_PIN2);
-  // -------------------------
-
-  // ------ stepper motor -------
-  pinMode(DIR_PIN_M1, OUTPUT);
-  pinMode(STEP_PIN_M1, OUTPUT);
-  pinMode(DIR_PIN_M2, OUTPUT);
-  pinMode(STEP_PIN_M2, OUTPUT);  
-  pinMode(DIR_PIN_M3, OUTPUT);
-  pinMode(STEP_PIN_M3, OUTPUT);
-  pinMode(DIR_PIN_M4, OUTPUT);
-  pinMode(STEP_PIN_M4, OUTPUT);
-  // -------------------------
-
-//  Serial.begin(9600);
-  Serial.begin(19200);
+  //------------ PS2 ---------------   
 
   //setup pins and settings: GamePad(clock, command, attention, data, Pressures?, Rumble?) check for error
   error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble);
@@ -252,6 +220,74 @@ void setup(){
       Serial.print("Wireless Sony DualShock Controller found ");
       break;
    }
+
+  //--------------------------------------------
+
+  pinMode(buzzer, OUTPUT); 
+  noTone(buzzer); 
+  
+  // ------ Switch pins ---------
+  pinMode(shoulderSwich1, INPUT_PULLUP); 
+  pinMode(shoulderSwich2, INPUT_PULLUP); 
+  pinMode(elbowSwich1, INPUT_PULLUP); 
+  pinMode(elbowSwich2, INPUT_PULLUP); 
+  pinMode(baseSwich1, INPUT_PULLUP); 
+  pinMode(baseSwich2, INPUT_PULLUP); 
+  pinMode(wristSwich1, INPUT_PULLUP); 
+  pinMode(wristSwich2, INPUT_PULLUP); 
+
+  // ------ servo motor -------
+  pinMode(SERVO_PIN, OUTPUT);
+  pinMode(SERVO_PIN2, OUTPUT);
+  myservo.attach(SERVO_PIN);
+  myservo2.attach(SERVO_PIN2);
+
+  // ------ stepper motor -------
+  pinMode(DIR_PIN_M1, OUTPUT);
+  pinMode(STEP_PIN_M1, OUTPUT);
+  pinMode(DIR_PIN_M2, OUTPUT);
+  pinMode(STEP_PIN_M2, OUTPUT);  
+  pinMode(DIR_PIN_M3, OUTPUT);
+  pinMode(STEP_PIN_M3, OUTPUT);
+  pinMode(DIR_PIN_M4, OUTPUT);
+  pinMode(STEP_PIN_M4, OUTPUT);
+  // -------------------------
+
+//  Serial.begin(9600);
+  Serial.begin(19200);
+
+  //----------------------------
+  // --------- Homing ----------
+  //----------------------------
+
+  while(initMotors()!=1);
+
+
+
+//        Serial.println("Initpos");
+//        Serial.println(servoPos, DEC);
+//
+//        for(int i=0 ; i<200; i++){
+//          servoPos++; 
+//          myservo.write(servoPos);
+//          delay(5);                                    
+//        }                
+//
+//        Serial.println("New pos");
+//        Serial.println(servoPos, DEC);
+//        
+//        delay(2000);         
+//        for(int i=0 ; i<200; i++){
+//          servoPos--; 
+//          myservo.write(servoPos);
+//          delay(5);                                    
+//        }                
+//        
+//        Serial.println("End pos");        
+//        Serial.println(servoPos, DEC);
+
+
+      
 }
 
 void loop() {
@@ -259,30 +295,32 @@ void loop() {
   if(error == 1) //skip loop if no controller found
     return; 
 
-    //----------------------------
-    // --------- Homing ----------
-    //----------------------------
-
-    if(!homing){
-        initMotors(HOMING_ACTION);
-        Serial.println("loop(): HOMING_ACTION ");
-    }
-
+    
     //---------------------------------------
     // ----------- Play sequence  -----------
     //---------------------------------------
 
     if(play){
-        initMotors(PLAY_ACTION);
-        Serial.println("loop(): PLAY_ACTION ");
+        // Init motors before play sequences
+        while(initMotors()!=1);
+        play = 0;        
+        playSequence = 1;
     }
     
     if(playSequence){
         delay(1000);         
         for(int i=1 ; i<posIndex+1 ; i++){            
 
+            Serial.print("Servonr: ");                                 
+            Serial.println(motor[i].number, DEC);                                             
+            Serial.print("Steps: ");                                 
             Serial.println(motor[i].steps, DEC);                                 
-        
+            Serial.print("Speed: ");                                 
+            Serial.println(motor[i].speed, DEC);                                 
+            Serial.print("Type: ");                                 
+            Serial.println(motor[i].type, DEC);                                                       
+            Serial.println("=====================");                                 
+                    
             if(motor[i].type == STEP_MOTOR){
               rotate(motor[i].steps, motor[i].speed, motor[i].number);  
             }
@@ -310,10 +348,12 @@ void loop() {
     
     // --------------------------------------
 
-    if(homing && !play && !playSequence){ 
+    if(!play && !playSequence){ 
 
-    // ------------- Switches ---------------
-
+      //---------------------------------------
+      // ------------- Switches ---------------
+      //---------------------------------------
+      
       // ----------- Base -----------
       
       if(!digitalRead(baseSwich1)){
@@ -323,7 +363,6 @@ void loop() {
           homingBase = 1;
         }
         tone(buzzer, 1950); 
-        //Serial.println("baseSwich1 on"); 
       }else{
         stopBasePos1 = 0;
         noTone(buzzer); 
@@ -332,7 +371,6 @@ void loop() {
       if(!digitalRead(baseSwich2)){
         stopBasePos2 = 1;
         tone(buzzer, 1950); 
-        //Serial.println("baseSwich2 on"); 
       }else{
         stopBasePos2 = 0;
         noTone(buzzer); 
@@ -343,7 +381,6 @@ void loop() {
       if(!digitalRead(wristSwich1)){
         stopWristPos1 = 1;
         tone(buzzer, 1950); 
-        //Serial.println("wristSwich1 on"); 
       }else{
         stopWristPos1 = 0;
         noTone(buzzer); 
@@ -352,7 +389,6 @@ void loop() {
       if(!digitalRead(wristSwich2)){
         stopWristPos2 = 1;
         tone(buzzer, 1950); 
-        //Serial.println("wristSwich2 on"); 
       }else{
         stopWristPos2 = 0;
         noTone(buzzer); 
@@ -363,7 +399,6 @@ void loop() {
       if(!digitalRead(elbowSwich1)){
         stopElbowPos1 = 1;
         tone(buzzer, 1950); 
-        //Serial.println("elbowSwich1 on"); 
       }else{
         stopElbowPos1 = 0;
         noTone(buzzer); 
@@ -372,7 +407,6 @@ void loop() {
       if(!digitalRead(elbowSwich2)){
         stopElbowPos2 = 1;
         tone(buzzer, 1950); 
-        //Serial.println("elbowSwich2 on"); 
       }else{
         stopElbowPos2 = 0;
         noTone(buzzer); 
@@ -383,7 +417,6 @@ void loop() {
       if(!digitalRead(shoulderSwich1)){
         stopShoulderPos1 = 1;
         tone(buzzer, 1950); 
-        //Serial.println("shoulderSwich1 on"); 
       }else{
         stopShoulderPos1 = 0;
         noTone(buzzer); 
@@ -392,19 +425,10 @@ void loop() {
       if(!digitalRead(shoulderSwich2)){
         stopShoulderPos2 = 1;
         tone(buzzer, 1950); 
-        //Serial.println("shoulderSwich2 on"); 
       }else{
         stopShoulderPos2 = 0;
         noTone(buzzer); 
       }         
-    // -------------------------------------
-    
-    ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
-    
-    if(ps2x.Button(PSB_START))         //will be TRUE as long as button is pressed
-      Serial.println("Start is being held");
-    if(ps2x.Button(PSB_SELECT))
-      Serial.println("Select is being held");     
 
     // --------------------------------------------
     // ------------- Servo1 gripper ---------------
@@ -418,11 +442,19 @@ void loop() {
           motor[posIndex].number = 5;          
           motor[posIndex].speed = 5;    
           motor[posIndex].type = SERVO_MOTOR;   
+          motor[posIndex].dir = DIR2;   
           gripperServoRotateDir1 = 1;
           gripperServoRotateDir2 = 0;
+
+          Serial.println("");           
+          Serial.println("S1");               
         }        
         servoPos -= 1;
-        motor[posIndex].steps = servoPos;       
+        motor[posIndex].steps = servoPos;     
+
+        Serial.print(":");        
+        Serial.print(servoPos, DEC);
+                  
         myservo.write(servoPos);
         delay(5);  
       }
@@ -434,12 +466,20 @@ void loop() {
           posIndex++;
           motor[posIndex].number = 5;          
           motor[posIndex].speed = 5;    
-          motor[posIndex].type = SERVO_MOTOR;   
+          motor[posIndex].type = SERVO_MOTOR; 
+          motor[posIndex].dir = DIR1;               
           gripperServoRotateDir2 = 1;
           gripperServoRotateDir1 = 0;
+
+          Serial.println("");           
+          Serial.println("S1");               
         }
         servoPos += 1;
-        motor[posIndex].steps = servoPos;                  
+        motor[posIndex].steps = servoPos;     
+
+        Serial.print(":");        
+        Serial.print(servoPos, DEC);
+                     
         myservo.write(servoPos);
         delay(5); 
       }
@@ -456,12 +496,20 @@ void loop() {
           posIndex++;
           motor[posIndex].number = 6;          
           motor[posIndex].speed = 5;    
-          motor[posIndex].type = SERVO_MOTOR;   
+          motor[posIndex].type = SERVO_MOTOR;  
+          motor[posIndex].dir = DIR2;              
           wristServoRotateDir1 = 1;
           wristServoRotateDir2 = 0;
+
+          Serial.println("");           
+          Serial.println("S2");               
         }        
         servoPos2 -= 1;
-        motor[posIndex].steps = servoPos2;                  
+        motor[posIndex].steps = servoPos2;     
+
+        Serial.print(":");        
+        Serial.print(servoPos2, DEC);
+                     
         myservo2.write(servoPos2);
         delay(5);  
       }
@@ -475,45 +523,23 @@ void loop() {
           motor[posIndex].number = 6;          
           motor[posIndex].speed = 5;    
           motor[posIndex].type = SERVO_MOTOR;   
+          motor[posIndex].dir = DIR1;             
           wristServoRotateDir2 = 1;
           wristServoRotateDir1 = 0;
+
+          Serial.println("");           
+          Serial.println("S2");     
         }        
         servoPos2 += 1;
-        motor[posIndex].steps = servoPos2;                          
+        motor[posIndex].steps = servoPos2;   
+
+        Serial.print(":");        
+        Serial.print(servoPos2, DEC);
+                               
         myservo2.write(servoPos2);
         delay(5); 
       }
     }   
-
-    // ------------------ End servo ----------------------
-
-//    vibrate = ps2x.Analog(PSAB_CROSS);  //this will set the large motor vibrate speed based on how hard you press the blue (X) button
-//    if (ps2x.NewButtonState()) {        //will be TRUE if any button changes state (on to off, or off to on)
-//      if(ps2x.Button(PSB_L3))
-//        Serial.println("L3 pressed");
-//      if(ps2x.Button(PSB_R3))
-//        Serial.println("R3 pressed");
-//      if(ps2x.Button(PSB_L2))
-//        Serial.println("L2 pressed");
-//      if(ps2x.Button(PSB_R2))
-//        Serial.println("R2 pressed");
-//     
-//       if(ps2x.Button(PSB_L1))
-//        Serial.println("L1 pressed");
-//             
-//      if(ps2x.Button(PSB_TRIANGLE))
-//        Serial.println("Triangle pressed");   
-//  
-//    }
-//
-//    if(ps2x.ButtonPressed(PSB_CIRCLE))               //will be TRUE if button was JUST pressed
-//      Serial.println("Circle just pressed");
-//    
-//    if(ps2x.NewButtonState(PSB_CROSS))               //will be TRUE if button was JUST pressed OR released
-//      Serial.println("X just changed");    
-//    
-//    if(ps2x.ButtonReleased(PSB_SQUARE))              //will be TRUE if button was JUST released
-//      Serial.println("Square just released");     
 
     // -----------------------------------------------
     // ------ Press button for playing sample --------
@@ -523,11 +549,11 @@ void loop() {
             play = 1;                              
             Serial.println("Play...");            
       }       
- 
+
+    //------------------------------------
     // ------ stepper motor#1 Base -------
-
-    // ==== baseSwitch1 ====
-
+    //------------------------------------
+    
     if(!stopBasePos1){
       if((ps2x.Analog(PSS_RX) == 0)){
         if(pssLYUpM2 == 0){
@@ -536,7 +562,10 @@ void loop() {
           motor[posIndex].number = 1;          
           motor[posIndex].speed = 0.10;    
           motor[posIndex].type = STEP_MOTOR;   
-          countSteps = 0;      
+          countSteps = 0;     
+          
+          Serial.println("");           
+          Serial.println("B");           
         }                
         if(pos2M2 > 0 && pssLYDownM2 == 1){
           pos2M2 = 0;
@@ -546,13 +575,11 @@ void loop() {
         countSteps++;        
         motor[posIndex].steps = countSteps;        
         rotate(pos2M2, 0.10, 1);
-        
-//        Serial.println(countSteps, DEC);
-//        Serial.println(posIndex, DEC);
+
+        Serial.print(":");        
+        Serial.print(countSteps, DEC);
       }        
     }
-
-    // ==== baseSwitch2 ====
 
     if(!stopBasePos2){
       if((ps2x.Analog(PSS_RX) == 255)){
@@ -563,6 +590,9 @@ void loop() {
           motor[posIndex].speed = 0.10;   
           motor[posIndex].type = STEP_MOTOR;                     
           countSteps = 0; 
+
+          Serial.println("");                     
+          Serial.println("B");           
         }          
         if(pos2M2 < 0 && pssLYUpM2 == 1){
           pos2M2 = 0;
@@ -572,14 +602,16 @@ void loop() {
         countSteps--; 
         motor[posIndex].steps = countSteps;  
         rotate(pos2M2, 0.10, 1);
-    
-//        Serial.println(countSteps, DEC);
-//          Serial.println(posIndex, DEC);
+        
+        Serial.print(":");            
+        Serial.print(countSteps, DEC);
       }     
     }
-    
-    // ------ stepper motor#2 Shoulder -------
 
+    //----------------------------------------    
+    // ------ stepper motor#2 Shoulder -------
+    //----------------------------------------
+    
     if(!stopShoulderPos1){
       if((ps2x.Analog(PSS_RY) == 0)){
         if(pssLYUpM1 == 0){
@@ -588,7 +620,10 @@ void loop() {
           motor[posIndex].number = 2;          
           motor[posIndex].speed = 0.10;   
           motor[posIndex].type = STEP_MOTOR;   
-          countSteps = 0;  
+          countSteps = 0; 
+
+          Serial.println("");                     
+          Serial.println("S");            
         }                   
         if(pos1M1 > 0 && pssLYDownM1 == 1){
           pos1M1 = 0;
@@ -598,7 +633,9 @@ void loop() {
         countSteps++;        
         motor[posIndex].steps = countSteps;          
         rotate(pos1M1, 0.10, 2);
-        //Serial.println("==== PSS_RY 0 ====");
+        
+        Serial.print(":");                
+        Serial.print(countSteps, DEC);
       }      
     }
 
@@ -611,6 +648,9 @@ void loop() {
           motor[posIndex].speed = 0.10;    
           motor[posIndex].type = STEP_MOTOR;   
           countSteps = 0;
+
+          Serial.println("");                     
+          Serial.println("S");           
         }                             
         if(pos2M1 < 0 && pssLYUpM1 == 1){
           pos2M1 = 0;
@@ -620,9 +660,15 @@ void loop() {
         countSteps--;        
         motor[posIndex].steps = countSteps;                  
         rotate(pos2M1, 0.10, 2);
-        //Serial.println("==== PSS_RY 255 ====");
+        
+        Serial.print(":");        
+        Serial.print(countSteps, DEC);
       }          
     }
+
+    //------------------------------------
+    // ------ stepper motor#4 Elbow ------
+    //------------------------------------
     
     if(!stopElbowPos1){
       if((ps2x.Analog(PSS_LX) == 0)){
@@ -632,7 +678,10 @@ void loop() {
           motor[posIndex].number = 3;          
           motor[posIndex].speed = 0.10;   
           motor[posIndex].type = STEP_MOTOR;    
-          countSteps = 0;                
+          countSteps = 0;  
+
+          Serial.println("");                     
+          Serial.println("E");
         }
         if(pos1M3 > 0 && pssLYDownM3 == 1){
           pos1M3 = 0;
@@ -643,8 +692,8 @@ void loop() {
         motor[posIndex].steps = countSteps;                
         rotate(pos1M3, 0.10, 3);
         
-//        Serial.println(countSteps, DEC);
-//        Serial.println(posIndex, DEC);
+        Serial.print(":");                
+        Serial.print(countSteps, DEC);
       }        
     }
 
@@ -656,7 +705,10 @@ void loop() {
           motor[posIndex].number = 3;          
           motor[posIndex].speed = 0.10;   
           motor[posIndex].type = STEP_MOTOR;    
-          countSteps = 0;                          
+          countSteps = 0;  
+
+          Serial.println("");                        
+          Serial.println("E");                                          
         }
         if(pos2M3 < 0 && pssLYUpM3 == 1){
           pos2M3 = 0;
@@ -666,13 +718,16 @@ void loop() {
         countSteps--;        
         motor[posIndex].steps = countSteps;                        
         rotate(pos2M3, 0.10, 3);
-
-//        Serial.println(countSteps, DEC);
-//        Serial.println(posIndex, DEC);
-
+        
+        Serial.print(":");        
+        Serial.print(countSteps, DEC);
       }            
     }
+    
+    //------------------------------------
     // ------ stepper motor#4 wrist-------
+    //------------------------------------
+
     if(!stopWristPos2){
       if((ps2x.Analog(PSS_LY) == 0)){
         if(pssLYUpM4 == 0){
@@ -681,7 +736,10 @@ void loop() {
           motor[posIndex].number = 4;          
           motor[posIndex].speed = 0.10;   
           motor[posIndex].type = STEP_MOTOR;    
-          countSteps = 0;                          
+          countSteps = 0;   
+
+          Serial.println("");                         
+          Serial.println("W");
         }         
         if(pos1M4 > 0 && pssLYDownM4 == 1){
           pos1M4 = 0;
@@ -691,7 +749,9 @@ void loop() {
         countSteps++;        
         motor[posIndex].steps = countSteps;                                
         rotate(pos1M4, 0.10, 4);
-        //Serial.println(pos1M4, DEC);
+        
+        Serial.print(":");                
+        Serial.print(countSteps, DEC);
       }        
     }
 
@@ -703,7 +763,10 @@ void loop() {
           motor[posIndex].number = 4;          
           motor[posIndex].speed = 0.10;   
           motor[posIndex].type = STEP_MOTOR;    
-          countSteps = 0;                                    
+          countSteps = 0;  
+
+          Serial.println("");                              
+          Serial.println("W");                                   
         }          
         if(pos2M4 < 0 && pssLYUpM4 == 1){
           pos2M4 = 0;
@@ -713,16 +776,54 @@ void loop() {
         countSteps--;        
         motor[posIndex].steps = countSteps;                                        
         rotate(pos2M4, 0.10, 4);
-        //Serial.println(pos2M4, DEC);
+        
+        Serial.print(":");        
+        Serial.print(countSteps, DEC);
       }      
     }
     }
+
+    //==========================================================
+
+    ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
+    
+    if(ps2x.Button(PSB_START))         //will be TRUE as long as button is pressed
+      Serial.println("Start is being held");
+    if(ps2x.Button(PSB_SELECT))
+      Serial.println("Select is being held");         
+    vibrate = ps2x.Analog(PSAB_CROSS);  //this will set the large motor vibrate speed based on how hard you press the blue (X) button
+    if (ps2x.NewButtonState()) {        //will be TRUE if any button changes state (on to off, or off to on)
+      if(ps2x.Button(PSB_L3))
+        Serial.println("L3 pressed");
+      if(ps2x.Button(PSB_R3))
+        Serial.println("R3 pressed");
+      if(ps2x.Button(PSB_L2))
+        Serial.println("L2 pressed");
+      if(ps2x.Button(PSB_R2))
+        Serial.println("R2 pressed");
+     
+       if(ps2x.Button(PSB_L1))
+        Serial.println("L1 pressed");
+             
+      if(ps2x.Button(PSB_TRIANGLE))
+        Serial.println("Triangle pressed");   
+  
+    }
+
+    if(ps2x.ButtonPressed(PSB_CIRCLE))               //will be TRUE if button was JUST pressed
+      Serial.println("Circle just pressed");
+    
+    if(ps2x.NewButtonState(PSB_CROSS))               //will be TRUE if button was JUST pressed OR released
+      Serial.println("X just changed");    
+    
+    if(ps2x.ButtonReleased(PSB_SQUARE))              //will be TRUE if button was JUST released
+      Serial.println("Square just released");     
+    
 }
 
 // ---------------------------------
 
-void initMotors(int action){
-
+int initMotors(){
     // --------- Homing ----------
 
       if(!homingWrist){
@@ -764,18 +865,7 @@ void initMotors(int action){
         homingElbow = 0;  
         homingShoulder = 0;             
         homingBase = 0;  
-
-        if(action == HOMING_ACTION){  // Homing
-          homing = 1;        
-          Serial.println("=== HOMING_ACTION ===");
-        }
-          
-        if(action == PLAY_ACTION){          // play sequence
-          play = 0;        
-          playSequence = 1;
-          Serial.println("=== PLAY_ACTION ===");
-        }           
-
+        
         //---------------------------------
         // --------- Init servos ----------
         //---------------------------------
@@ -788,7 +878,8 @@ void initMotors(int action){
         for(int i=0 ; i<servoPos2;  i++){
           myservo2.write(i);
           delay(5);                                    
-        }                      
+        }        
+        return 1;                   
       }
 }
 
