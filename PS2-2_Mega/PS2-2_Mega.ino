@@ -308,7 +308,9 @@ void loop() {
     }
     
     if(playSequence){
-        delay(1000);         
+        
+        delay(1000);           
+             
         for(int i=1 ; i<posIndex+1 ; i++){            
 
             Serial.print("Servonr: ");                                 
@@ -320,26 +322,57 @@ void loop() {
             Serial.print("Type: ");                                 
             Serial.println(motor[i].type, DEC);                                                       
             Serial.println("=====================");                                 
+
+            // ------------ Step motors --------------
                     
             if(motor[i].type == STEP_MOTOR){
               rotate(motor[i].steps, motor[i].speed, motor[i].number);  
             }
+
+            // ------------ Servos motors --------------
             
             if(motor[i].type == SERVO_MOTOR){
 
-              if(motor[i].number == 5){                
-                for(int j1=0 ; j1<motor[i].steps; j1++){
-                  myservo.write(j1);
+              // ----------------- Servo1, Gripper --------------------              
+
+              if(motor[i].number == 5 && motor[i].dir == DIR1){                
+              
+                for(int j=0 ; j < motor[i].steps; j++){
+                  servoPos++;  
+                  myservo.write(servoPos);
                   delay(motor[i].speed);                                    
-                }                
+                }                                               
+              }
+              
+              if(motor[i].number == 5 && motor[i].dir == DIR2){
+                
+                for(int j=0 ; j < motor[i].steps; j++){
+                  servoPos--;  
+                  myservo.write(servoPos);
+                  delay(motor[i].speed);                                    
+                }                                               
               }
 
-              if(motor[i].number == 6){
-                for(int j2=0 ; j2<motor[i].steps; j2++){
-                  myservo2.write(j2);
+              // ----------------- Servo2, Wrist --------------------
+              
+              if(motor[i].number == 6 && motor[i].dir == DIR1){
+              
+                for(int j=0 ; j < motor[i].steps; j++){
+                  servoPos2++;
+                  myservo2.write(servoPos2);
                   delay(motor[i].speed);                                    
-                }
+                }                
               }              
+
+              if(motor[i].number == 6 && motor[i].dir == DIR2){
+              
+                for(int j=0 ; j < motor[i].steps; j++){
+                  servoPos2--;
+                  myservo2.write(servoPos2);
+                  delay(motor[i].speed);                                    
+                }                
+              }              
+
             }
         }
         
@@ -789,16 +822,22 @@ void loop() {
     
     if(ps2x.Button(PSB_START))         //will be TRUE as long as button is pressed
       Serial.println("Start is being held");
+    
     if(ps2x.Button(PSB_SELECT))
       Serial.println("Select is being held");         
     vibrate = ps2x.Analog(PSAB_CROSS);  //this will set the large motor vibrate speed based on how hard you press the blue (X) button
+    
     if (ps2x.NewButtonState()) {        //will be TRUE if any button changes state (on to off, or off to on)
+    
       if(ps2x.Button(PSB_L3))
         Serial.println("L3 pressed");
+      
       if(ps2x.Button(PSB_R3))
         Serial.println("R3 pressed");
+      
       if(ps2x.Button(PSB_L2))
         Serial.println("L2 pressed");
+      
       if(ps2x.Button(PSB_R2))
         Serial.println("R2 pressed");
      
