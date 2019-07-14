@@ -56,6 +56,11 @@ byte vibrate = 0;
 #define DIR1 1      // servo pos ++
 #define DIR2 2      // servo pos --
 
+# define STEP_MOTOR_SPEED_BASE 0.1
+# define STEP_MOTOR_SPEED_SHOULDER 0.1
+# define STEP_MOTOR_SPEED_ELBOW 0.1
+# define STEP_MOTOR_SPEED_WRIST 0.1
+
 // ------ stepper motor#1 -------
 # define DIR_PIN_M1 6
 # define STEP_PIN_M1 7
@@ -107,6 +112,7 @@ int play;
 int playSequence;
 int countSteps;
 int buzzer; 
+int homingDone;
 
 // ------ servos --------
 
@@ -118,6 +124,7 @@ int gripperServoRotateDir1;
 int gripperServoRotateDir2;
 int wristServoRotateDir1;
 int wristServoRotateDir2;
+int servoSteps;
 
 // --------- Struct -----------
 
@@ -161,9 +168,10 @@ void setup(){
   steps = 0;
   countSteps = 0;
   buzzer = 31; 
+  homingDone = 0;
   
   // ---- servo ----
-  servoPos = 90;
+  servoPos = MAX_GRIPPER_POS;
   servoPos2 = 90;
   gripperServoRotateDir1 = 0;
   gripperServoRotateDir2 = 0;
@@ -172,7 +180,7 @@ void setup(){
   // ---------------
   play = 0;
   playSequence = 0;
-
+  servoSteps = 0;
   //------------ PS2 ---------------   
 
   //setup pins and settings: GamePad(clock, command, attention, data, Pressures?, Rumble?) check for error
@@ -260,34 +268,124 @@ void setup(){
   // --------- Homing ----------
   //----------------------------
 
-  while(initMotors()!=1);
+  //---------- Limits from homing ---------
+  // Base: 1200, -1300
+  // Shoulder: 2250, -1000
+  // Elbow: 2000, -500
+  // Wrist: 2000, -500
+  // Servo Wrist: 145
+  // Servo Gripper: 145
+  
+        posIndex++;
+        motor[posIndex].number = 1;          
+        motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
+        motor[posIndex].type = STEP_MOTOR;   
+        motor[posIndex].steps = 1200;      
+
+
+//        posIndex++;
+//        motor[posIndex].number = 2;          
+//        motor[posIndex].speed = STEP_MOTOR_SPEED_SHOULDER;    
+//        motor[posIndex].type = STEP_MOTOR;   
+//        motor[posIndex].steps = 2250;      
+//        posIndex++;
+//        motor[posIndex].number = 3;          
+//        motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
+//        motor[posIndex].type = STEP_MOTOR;   
+//        motor[posIndex].steps = -500;      
+
+//        posIndex++;
+//        motor[posIndex].number = 4;          
+//        motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
+//        motor[posIndex].type = STEP_MOTOR;   
+//        motor[posIndex].steps = -500;      
 
 
 
-//        Serial.println("Initpos");
-//        Serial.println(servoPos, DEC);
+//        // Close the gripper
+//        posIndex++;
+//        motor[posIndex].number = 5;          
+//        motor[posIndex].speed = 5;    
+//        motor[posIndex].type = SERVO_MOTOR;   
+//        motor[posIndex].steps = 90;      
+//        motor[posIndex].dir = DIR1;  
+//        
 //
-//        for(int i=0 ; i<200; i++){
-//          servoPos++; 
-//          myservo.write(servoPos);
+//        posIndex++;
+//        motor[posIndex].number = 2;          
+//        motor[posIndex].speed = STEP_MOTOR_SPEED_SHOULDER;    
+//        motor[posIndex].type = STEP_MOTOR;   
+//        motor[posIndex].steps = 600;      
+//        posIndex++;
+//        motor[posIndex].number = 3;          
+//        motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
+//        motor[posIndex].type = STEP_MOTOR;   
+//        motor[posIndex].steps = -800;      
+//        posIndex++;
+//        motor[posIndex].number = 4;          
+//        motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
+//        motor[posIndex].type = STEP_MOTOR;   
+//        motor[posIndex].steps = -800;     
+//         
+//        posIndex++;
+//        motor[posIndex].number = 2;          
+//        motor[posIndex].speed = STEP_MOTOR_SPEED_SHOULDER;    
+//        motor[posIndex].type = STEP_MOTOR;   
+//        motor[posIndex].steps = -600;      
+//        posIndex++;
+//        motor[posIndex].number = 3;          
+//        motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
+//        motor[posIndex].type = STEP_MOTOR;   
+//        motor[posIndex].steps = 800;      
+//        posIndex++;
+//        motor[posIndex].number = 4;          
+//        motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
+//        motor[posIndex].type = STEP_MOTOR;   
+//        motor[posIndex].steps = 800;      
+//
+//        // Open the gripper
+//        posIndex++;
+//        motor[posIndex].number = 5;          
+//        motor[posIndex].speed = 5;    
+//        motor[posIndex].type = SERVO_MOTOR;   
+//        motor[posIndex].steps = 90;      
+//        motor[posIndex].dir = DIR2;  
+//
+//        posIndex++;
+//        motor[posIndex].number = 2;          
+//        motor[posIndex].speed = STEP_MOTOR_SPEED_SHOULDER;    
+//        motor[posIndex].type = STEP_MOTOR;   
+//        motor[posIndex].steps = 600;      
+//        posIndex++;
+//        motor[posIndex].number = 3;          
+//        motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
+//        motor[posIndex].type = STEP_MOTOR;   
+//        motor[posIndex].steps = -800;      
+//        posIndex++;
+//        motor[posIndex].number = 4;          
+//        motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
+//        motor[posIndex].type = STEP_MOTOR;   
+//        motor[posIndex].steps = -800;    
+
+  while(!homingDone){
+    initMotors();
+  }
+
+ 
+    
+
+//        for(int i=0 ; i<10; i++){
+//          myservo.write(i);
 //          delay(5);                                    
 //        }                
-//
-//        Serial.println("New pos");
-//        Serial.println(servoPos, DEC);
-//        
-//        delay(2000);         
+
+
 //        for(int i=0 ; i<200; i++){
 //          servoPos--; 
 //          myservo.write(servoPos);
 //          delay(5);                                    
 //        }                
-//        
-//        Serial.println("End pos");        
-//        Serial.println(servoPos, DEC);
-
-
-      
+        
 }
 
 void loop() {
@@ -302,7 +400,9 @@ void loop() {
 
     if(play){
         // Init motors before play sequences
-        while(initMotors()!=1);
+//        while(!homingDone){
+//          initMotors();
+//        }
         play = 0;        
         playSequence = 1;
     }
@@ -321,7 +421,8 @@ void loop() {
             Serial.println(motor[i].speed, DEC);                                 
             Serial.print("Type: ");                                 
             Serial.println(motor[i].type, DEC);                                                       
-            Serial.println("=====================");                                 
+            Serial.print("Dir: ");                                 
+            Serial.println(motor[i].dir, DEC);                                                       
 
             // ------------ Step motors --------------
                     
@@ -336,46 +437,69 @@ void loop() {
               // ----------------- Servo1, Gripper --------------------              
 
               if(motor[i].number == 5 && motor[i].dir == DIR1){                
-              
+
+                Serial.println("Motornr 5");       
+                Serial.println("DIR1");       
+                              
                 for(int j=0 ; j < motor[i].steps; j++){
                   servoPos++;  
                   myservo.write(servoPos);
                   delay(motor[i].speed);                                    
-                }                                               
+                }       
+                delay(1000);
+                Serial.println(servoPos, DEC);       
+                                                        
               }
               
               if(motor[i].number == 5 && motor[i].dir == DIR2){
+
+                Serial.println("Motornr 5");       
+                Serial.println("DIR2");                       
                 
                 for(int j=0 ; j < motor[i].steps; j++){
                   servoPos--;  
                   myservo.write(servoPos);
                   delay(motor[i].speed);                                    
-                }                                               
+                }    
+                delay(1000);
+                Serial.println(servoPos, DEC);                                                                  
               }
 
               // ----------------- Servo2, Wrist --------------------
               
               if(motor[i].number == 6 && motor[i].dir == DIR1){
+
+//                Serial.println("Motornr 6");       
+//                Serial.println("DIR1");                       
               
                 for(int j=0 ; j < motor[i].steps; j++){
                   servoPos2++;
                   myservo2.write(servoPos2);
                   delay(motor[i].speed);                                    
-                }                
+                }            
+                delay(1000);
+//                Serial.println(servoPos2, DEC);       
               }              
 
               if(motor[i].number == 6 && motor[i].dir == DIR2){
+
+//                Serial.println("Motornr 6");       
+//                Serial.println("DIR2");                       
               
                 for(int j=0 ; j < motor[i].steps; j++){
                   servoPos2--;
                   myservo2.write(servoPos2);
                   delay(motor[i].speed);                                    
-                }                
+                }    
+                delay(1000);
+//                Serial.println(servoPos2, DEC);                                   
               }              
 
             }
+
+            Serial.println("=====================");       
         }
-        
+        //delay(5000);
         playSequence = 0;        
     }
     
@@ -468,8 +592,7 @@ void loop() {
     // --------------------------------------------
     
     if(ps2x.Button(PSB_PAD_RIGHT)){               
-      if(servoPos > MIN_GRIPPER_POS){
-
+      if(servoPos > MIN_GRIPPER_POS){        
         if(!gripperServoRotateDir1){
           posIndex++;
           motor[posIndex].number = 5;          
@@ -478,15 +601,16 @@ void loop() {
           motor[posIndex].dir = DIR2;   
           gripperServoRotateDir1 = 1;
           gripperServoRotateDir2 = 0;
-
+          servoSteps = 0;
           Serial.println("");           
           Serial.println("S1");               
         }        
         servoPos -= 1;
-        motor[posIndex].steps = servoPos;     
+        servoSteps++;
+        motor[posIndex].steps = servoSteps;     
 
         Serial.print(":");        
-        Serial.print(servoPos, DEC);
+        Serial.print(servoSteps, DEC);
                   
         myservo.write(servoPos);
         delay(5);  
@@ -503,15 +627,16 @@ void loop() {
           motor[posIndex].dir = DIR1;               
           gripperServoRotateDir2 = 1;
           gripperServoRotateDir1 = 0;
-
+          servoSteps = 0;
           Serial.println("");           
           Serial.println("S1");               
         }
         servoPos += 1;
-        motor[posIndex].steps = servoPos;     
+        servoSteps++;
+        motor[posIndex].steps = servoSteps;     
 
         Serial.print(":");        
-        Serial.print(servoPos, DEC);
+        Serial.print(servoSteps, DEC);
                      
         myservo.write(servoPos);
         delay(5); 
@@ -533,15 +658,16 @@ void loop() {
           motor[posIndex].dir = DIR2;              
           wristServoRotateDir1 = 1;
           wristServoRotateDir2 = 0;
-
+          servoSteps = 0;
           Serial.println("");           
           Serial.println("S2");               
         }        
         servoPos2 -= 1;
-        motor[posIndex].steps = servoPos2;     
+        servoSteps++;
+        motor[posIndex].steps = servoSteps;     
 
         Serial.print(":");        
-        Serial.print(servoPos2, DEC);
+        Serial.print(servoSteps, DEC);
                      
         myservo2.write(servoPos2);
         delay(5);  
@@ -559,15 +685,16 @@ void loop() {
           motor[posIndex].dir = DIR1;             
           wristServoRotateDir2 = 1;
           wristServoRotateDir1 = 0;
-
+          servoSteps = 0;
           Serial.println("");           
           Serial.println("S2");     
         }        
         servoPos2 += 1;
-        motor[posIndex].steps = servoPos2;   
+        servoSteps++;
+        motor[posIndex].steps = servoSteps;   
 
         Serial.print(":");        
-        Serial.print(servoPos2, DEC);
+        Serial.print(servoSteps, DEC);
                                
         myservo2.write(servoPos2);
         delay(5); 
@@ -593,10 +720,9 @@ void loop() {
           pssLYUpM2 = 1;     
           posIndex++;
           motor[posIndex].number = 1;          
-          motor[posIndex].speed = 0.10;    
+          motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
           motor[posIndex].type = STEP_MOTOR;   
-          countSteps = 0;     
-          
+          countSteps = 0;               
           Serial.println("");           
           Serial.println("B");           
         }                
@@ -620,10 +746,10 @@ void loop() {
           pssLYDownM2 = 1;
           posIndex++;
           motor[posIndex].number = 1;          
-          motor[posIndex].speed = 0.10;   
+          motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;   
           motor[posIndex].type = STEP_MOTOR;                     
           countSteps = 0; 
-
+          
           Serial.println("");                     
           Serial.println("B");           
         }          
@@ -651,7 +777,7 @@ void loop() {
           pssLYUpM1 = 1;  
           posIndex++;
           motor[posIndex].number = 2;          
-          motor[posIndex].speed = 0.10;   
+          motor[posIndex].speed = STEP_MOTOR_SPEED_SHOULDER;   
           motor[posIndex].type = STEP_MOTOR;   
           countSteps = 0; 
 
@@ -678,7 +804,7 @@ void loop() {
           pssLYDownM1 = 1;
           posIndex++;
           motor[posIndex].number = 2;          
-          motor[posIndex].speed = 0.10;    
+          motor[posIndex].speed = STEP_MOTOR_SPEED_SHOULDER;    
           motor[posIndex].type = STEP_MOTOR;   
           countSteps = 0;
 
@@ -709,7 +835,7 @@ void loop() {
           pssLYUpM3 = 1;        
           posIndex++;
           motor[posIndex].number = 3;          
-          motor[posIndex].speed = 0.10;   
+          motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;   
           motor[posIndex].type = STEP_MOTOR;    
           countSteps = 0;  
 
@@ -736,7 +862,7 @@ void loop() {
           pssLYDownM3 = 1;
           posIndex++;
           motor[posIndex].number = 3;          
-          motor[posIndex].speed = 0.10;   
+          motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;   
           motor[posIndex].type = STEP_MOTOR;    
           countSteps = 0;  
 
@@ -767,7 +893,7 @@ void loop() {
           pssLYUpM4 = 1;        
           posIndex++;
           motor[posIndex].number = 4;          
-          motor[posIndex].speed = 0.10;   
+          motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;   
           motor[posIndex].type = STEP_MOTOR;    
           countSteps = 0;   
 
@@ -794,7 +920,7 @@ void loop() {
           pssLYDownM4 = 1;
           posIndex++;
           motor[posIndex].number = 4;          
-          motor[posIndex].speed = 0.10;   
+          motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;   
           motor[posIndex].type = STEP_MOTOR;    
           countSteps = 0;  
 
@@ -820,55 +946,56 @@ void loop() {
 
     ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
     
-    if(ps2x.Button(PSB_START))         //will be TRUE as long as button is pressed
-      Serial.println("Start is being held");
-    
-    if(ps2x.Button(PSB_SELECT))
-      Serial.println("Select is being held");         
-    vibrate = ps2x.Analog(PSAB_CROSS);  //this will set the large motor vibrate speed based on how hard you press the blue (X) button
-    
-    if (ps2x.NewButtonState()) {        //will be TRUE if any button changes state (on to off, or off to on)
-    
-      if(ps2x.Button(PSB_L3))
-        Serial.println("L3 pressed");
-      
-      if(ps2x.Button(PSB_R3))
-        Serial.println("R3 pressed");
-      
-      if(ps2x.Button(PSB_L2))
-        Serial.println("L2 pressed");
-      
-      if(ps2x.Button(PSB_R2))
-        Serial.println("R2 pressed");
-     
-       if(ps2x.Button(PSB_L1))
-        Serial.println("L1 pressed");
-             
-      if(ps2x.Button(PSB_TRIANGLE))
-        Serial.println("Triangle pressed");   
-  
-    }
-
-    if(ps2x.ButtonPressed(PSB_CIRCLE))               //will be TRUE if button was JUST pressed
-      Serial.println("Circle just pressed");
-    
-    if(ps2x.NewButtonState(PSB_CROSS))               //will be TRUE if button was JUST pressed OR released
-      Serial.println("X just changed");    
-    
-    if(ps2x.ButtonReleased(PSB_SQUARE))              //will be TRUE if button was JUST released
-      Serial.println("Square just released");     
-    
+//    if(ps2x.Button(PSB_START))         //will be TRUE as long as button is pressed
+//      Serial.println("Start is being held");
+//    
+//    if(ps2x.Button(PSB_SELECT))
+//      Serial.println("Select is being held");         
+//    vibrate = ps2x.Analog(PSAB_CROSS);  //this will set the large motor vibrate speed based on how hard you press the blue (X) button
+//    
+//    if (ps2x.NewButtonState()) {        //will be TRUE if any button changes state (on to off, or off to on)
+//    
+//      if(ps2x.Button(PSB_L3))
+//        Serial.println("L3 pressed");
+//      
+//      if(ps2x.Button(PSB_R3))
+//        Serial.println("R3 pressed");
+//      
+//      if(ps2x.Button(PSB_L2))
+//        Serial.println("L2 pressed");
+//      
+//      if(ps2x.Button(PSB_R2))
+//        Serial.println("R2 pressed");
+//     
+//       if(ps2x.Button(PSB_L1))
+//        Serial.println("L1 pressed");
+//             
+//      if(ps2x.Button(PSB_TRIANGLE))
+//        Serial.println("Triangle pressed");   
+//  
+//    }
+//
+//    if(ps2x.ButtonPressed(PSB_CIRCLE))               //will be TRUE if button was JUST pressed
+//      Serial.println("Circle just pressed");
+//    
+//    if(ps2x.NewButtonState(PSB_CROSS))               //will be TRUE if button was JUST pressed OR released
+//      Serial.println("X just changed");    
+//    
+//    if(ps2x.ButtonReleased(PSB_SQUARE))              //will be TRUE if button was JUST released
+//      Serial.println("Square just released");     
+//    
 }
 
 // ---------------------------------
 
-int initMotors(){
+void initMotors(){
+
     // --------- Homing ----------
 
       if(!homingWrist){
         rotate(-100, 0.10, 4);
         if(!digitalRead(wristSwich1)){          
-          rotate(500, 0.10, 4);
+          rotate(500, STEP_MOTOR_SPEED_BASE, 4);
           homingWrist = 1;  
         }
       }
@@ -876,7 +1003,7 @@ int initMotors(){
       if(!homingElbow && homingWrist ){
         rotate(-100, 0.10, 3);
         if(!digitalRead(elbowSwich2)){          
-          rotate(500, 0.10, 3);
+          rotate(500, STEP_MOTOR_SPEED_ELBOW, 3);
           homingElbow = 1;  
         }
       }
@@ -884,7 +1011,7 @@ int initMotors(){
       if(!homingShoulder && homingWrist && homingElbow){
         rotate(-100, 0.10, 2);
         if(!digitalRead(shoulderSwich2)){          
-          rotate(1000, 0.10, 2);
+          rotate(1000, STEP_MOTOR_SPEED_SHOULDER, 2);
          // rotate(1500, 0.10, 4);
           homingShoulder = 1;  
         }
@@ -893,7 +1020,7 @@ int initMotors(){
       if(!homingBase && homingShoulder && homingWrist && homingElbow){
         rotate(-100, 0.10, 1);
         if(!digitalRead(baseSwich2)){          
-          rotate(1300, 0.10, 1);
+          rotate(1300, STEP_MOTOR_SPEED_SHOULDER, 1);
           //rotate(2300, 0.10, 1);
           homingBase = 1;            
         }
@@ -908,7 +1035,10 @@ int initMotors(){
         //---------------------------------
         // --------- Init servos ----------
         //---------------------------------
-  
+
+        servoPos = 10;
+        servoPos2 = 90;
+       
         for(int i=0 ; i<servoPos; i++){
           myservo.write(i);
           delay(5);                                    
@@ -918,7 +1048,8 @@ int initMotors(){
           myservo2.write(i);
           delay(5);                                    
         }        
-        return 1;                   
+
+        homingDone = 1;
       }
 }
 
