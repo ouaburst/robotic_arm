@@ -1,7 +1,14 @@
 void setup() {
   
   Serial.begin(19200);
-  Serial.write("This is a test"); 
+  Serial.write("Ready..."); 
+
+  char str[3];
+  strcat(str, "1");
+  strcat(str, "2");
+  strcat(str, "3");  
+
+  Serial.write(str);    
 }
 
 void loop() {
@@ -13,20 +20,21 @@ void loop() {
 void serialEvent()
 {
 
-  char *token;
+  char str[5];
+  char ch;
   
   while(Serial.available()){
-    char ch = Serial.read();
-    Serial.write(ch);
-  
-    token = strtok(ch, ","); 
+    
+    ch = Serial.read();
+    //Serial.println(ch);
 
-    while (token != NULL) 
-    { 
-        Serial.write(token);    
-        token = strtok(NULL, ","); 
+    if(isdigit(ch)){
+      //Serial.println(ch);
+      strcat(str, atoi(ch));      
+      
+    }else{
+      Serial.println(str);    
+      free(str);     
     }
-
-     
   }
 }
