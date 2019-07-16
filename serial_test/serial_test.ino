@@ -2,12 +2,13 @@
   
 char ch;
 int index = 0;
-char strValue[4];
-  
+char strValue[2];
+ int count = 0;
+   
 void setup() {
   
   Serial.begin(19200);
-  Serial.write("Ready..."); 
+  Serial.println("Ready..."); 
 
 //  char strValue[4];
 //  int index = 0;
@@ -37,42 +38,31 @@ void loop() {
 void serialEvent()
 {
 
-
+ 
   
   while(Serial.available()){
 
     if (Serial.available() > 0) {
       ch = Serial.read();
 
-      Serial.print("I received: ");
-     Serial.println(ch, DEC);
+      //Serial.print("I received: ");
+      //Serial.println(ch, DEC);
+      Serial.println(count, DEC);
 
-      //if(isdigit(ch)){
-      if(ch!=44){
-         strValue[index++] = ch;
-      }
-      else{
-        //Serial.println(atoi(strValue), DEC);
-        Serial.println(strValue);
-        index=0;               
-      }
+      count++;
 
-  }
-    
-//    ch = Serial.read();
-//    //Serial.println(ch);
-//
-//    if(isdigit(ch)){
-//      //Serial.println(ch);
-//      strcat(str, ch);      
-//      
-//    }
-////    else{
-////      Serial.println(str);    
-////      free(str);     
-////    }
-//
-//    Serial.write(str);    
-    
+//      if(ch==13 || ch==10){
+//        
+//      }      
+//      else if(ch!=44){
+//         strValue[index++] = ch;
+//      }
+//      else{
+//        //Serial.println(atoi(strValue), DEC);
+//        Serial.print("Result: ");
+//        Serial.println(strValue);
+//        index=0;               
+//      }
+    }
   }
 }
