@@ -45,24 +45,34 @@ void serialEvent()
     if (Serial.available() > 0) {
       ch = Serial.read();
 
-      //Serial.print("I received: ");
-      //Serial.println(ch, DEC);
-      Serial.println(count, DEC);
+      Serial.print("I received: ");
+      Serial.println(ch, DEC);
 
-      count++;
-
-//      if(ch==13 || ch==10){
-//        
-//      }      
-//      else if(ch!=44){
-//         strValue[index++] = ch;
-//      }
-//      else{
-//        //Serial.println(atoi(strValue), DEC);
+      //if(isdigit(ch)){
+//      if(ch!=44 && ch!=10){
+//        Serial.println("Is digit");
+//        strValue[index++] = ch;
+//      }else{
 //        Serial.print("Result: ");
 //        Serial.println(strValue);
-//        index=0;               
+//        Serial.println("============");
+//        index=0;
 //      }
+
+//      if(ch==13 || ch==10){        
+//      }      
+      //else if(ch!=44){
+      if (ch!=44 && ch!=13 && ch!=10){
+         strValue[index++] = ch;
+      }
+      else{
+        //Serial.println(atoi(strValue), DEC);
+        Serial.print("Result: ");
+        Serial.println(strValue);
+        Serial.println("============");
+        index=0;               
+      }
+    
     }
   }
 }
