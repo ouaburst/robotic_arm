@@ -3,8 +3,13 @@
 char ch;
 int index = 0;
 char strValue[2];
- int count = 0;
-   
+int count = 0;
+String data;
+char char_array[40];
+char *token;
+
+int n;
+
 void setup() {
   
   Serial.begin(19200);
@@ -42,37 +47,45 @@ void serialEvent()
   
   while(Serial.available()){
 
-    if (Serial.available() > 0) {
-      ch = Serial.read();
+    if(Serial.available()){
+        data = Serial.readStringUntil('\n');
+        //Serial.println("Result, " + data);
 
-      Serial.print("I received: ");
-      Serial.println(ch, DEC);
+        strcpy(char_array, data.c_str()); 
+    }
 
-      //if(isdigit(ch)){
-//      if(ch!=44 && ch!=10){
-//        Serial.println("Is digit");
-//        strValue[index++] = ch;
-//      }else{
-//        Serial.print("Result: ");
-//        Serial.println(strValue);
-//        Serial.println("============");
-//        index=0;
-//      }
+   token = strtok(char_array, ",");
+   
+   while( token != NULL ) {
+      Serial.write(token);    
+      Serial.println("");
+      token = strtok(NULL, ",");
+   }
 
+   Serial.println("============");
+    
+//    if (Serial.available() > 0) {
+//      ch = Serial.read();
+//
+//      Serial.print("I received: ");
+//      Serial.println(ch, DEC);
+//
 //      if(ch==13 || ch==10){        
 //      }      
-      //else if(ch!=44){
-      if (ch!=44 && ch!=13 && ch!=10){
-         strValue[index++] = ch;
-      }
-      else{
-        //Serial.println(atoi(strValue), DEC);
-        Serial.print("Result: ");
-        Serial.println(strValue);
-        Serial.println("============");
-        index=0;               
-      }
+//      else if(ch!=44){
+//         strValue[index++] = ch;
+//      }
+//      else{
+//        //Serial.println(atoi(strValue), DEC);
+//        Serial.print("Result: ");
+//        Serial.println(strValue);
+//        
+//        Serial.print("atof: ");
+//        Serial.println(atof(strValue), DEC);
+//        Serial.println("============");
+//        index=0;               
+//      }
+//    }
     
-    }
   }
 }
