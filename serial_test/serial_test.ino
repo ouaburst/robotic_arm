@@ -46,7 +46,7 @@ void serialEvent()
  
   
   while(Serial.available()){
-
+    
     if(Serial.available()){
         data = Serial.readStringUntil('\n');
         //Serial.println("Result, " + data);
@@ -56,9 +56,20 @@ void serialEvent()
 
    token = strtok(char_array, ",");
    
-   while( token != NULL ) {
+   while(token != NULL) {
+
+      n = 0;
+      
       Serial.write(token);    
       Serial.println("");
+
+      n = atoi(token) + 1;
+     Serial.println(n, DEC);
+      
+      if (strstr(token, ".") != NULL) {
+          Serial.println("Is float");
+      }
+      
       token = strtok(NULL, ",");
    }
 
