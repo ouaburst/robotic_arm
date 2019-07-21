@@ -114,6 +114,11 @@ int countSteps;
 int buzzer; 
 int homingDone;
 
+// ---- Serial ----
+String serialData;
+char char_array[40];
+char *token;
+
 // ------ servos --------
 
 Servo myservo;
@@ -139,6 +144,10 @@ typedef struct {
 Motors motor;
 
 int testLoop;
+int n;
+int dataParam;          // Data paramters in the csv file:
+                        // 1: motornr, 2: speed, 3:motor type, 
+                        // 4:steps, 5:direction (only for servo)                        
 
 // ----------------------------
 
@@ -1121,6 +1130,55 @@ void rotate(int steps, float speed, int motor) {
       digitalWrite(STEP_PIN_M4, LOW);
       delayMicroseconds(usDelay);
     }    
+  } 
+}
+
+// ----------------------------------------------
+
+void serialEvent()
+{
+  while(Serial.available()){
+    
+    dataParam = 1;
+    
+    if(Serial.available()){
+      serialData = Serial.readStringUntil('\n');
+      strcpy(char_array, serialData.c_str()); 
+    }
+
+    token = strtok(char_array, ",");
+   
+    while(token != NULL) {
+          
+          posIndex++;
+          
+          if(dataParam == 1){
+            motor[posIndex].number = atoi(token);            
+            dataParam++;
+          }
+          else if(dataParam == 2){
+            
+            if (strstr(token, ".") != NULL) {
+              motor[posIndex].speed = atof(token);              
+            }
+            else{
+              motor[posIndex].speed = atoi(token);              
+            }           
+            dataParam++; 
+          }
+          else if(dataParam == 3){
+            motor[posIndex].type = atoi(token);              
+            dataParam++; 
+          }
+          else if(dataParam == 4){
+            motor[posIndex].steps = atoi(token);              
+            dataParam++; 
+          }
+          else if(dataParam == 5){
+            motor[posIndex].dir = atoi(token);              
+          }
+      
+          token = strtok(NULL, ",");
+     }        
   }
-  
 }
