@@ -1144,6 +1144,8 @@ void serialEvent()
     if(Serial.available()){
       serialData = Serial.readStringUntil('\n');
       strcpy(char_array, serialData.c_str()); 
+    }else{
+      play = 1;  
     }
 
     token = strtok(char_array, ",");
