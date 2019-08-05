@@ -1148,7 +1148,7 @@ void serialEvent()
       play = 1;  
     }
 
-    token = strtok(char_array, ",");
+    token = strtok(char_array, ","); 
    
     while(token != NULL) {
           
