@@ -277,6 +277,14 @@ void setup(){
   // --------- Homing ----------
   //----------------------------
 
+  // ------ Motor number --------
+  // Base 1
+  // Shoulder 2
+  // Elbow 3
+  // Wrist 4
+  // Gripper 5
+  // Wrist2 6
+
   //---------- Limits from homing ---------
   // Base: 1200, -1300
   // Shoulder: 2250, -1000
@@ -294,96 +302,63 @@ void setup(){
   // servoPos = 10;
   // servoPos2 = 90;
 
-        posIndex++;
-        motor[posIndex].number = 1;          
-        motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
-        motor[posIndex].type = STEP_MOTOR;   
-        motor[posIndex].steps = 1200;      
+  posIndex++;
+  motor[posIndex].number = 3;          
+  motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
+  motor[posIndex].type = STEP_MOTOR;   
+  motor[posIndex].steps = -141;      
+  
+  posIndex++;
+  motor[posIndex].number = 3;          
+  motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
+  motor[posIndex].type = STEP_MOTOR;   
+  motor[posIndex].steps = 991;  
 
+  posIndex++;
+  motor[posIndex].number = 4;          
+  motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
+  motor[posIndex].type = STEP_MOTOR;   
+  motor[posIndex].steps = 1202;      
+      
+  // Close the gripper
+  posIndex++;
+  motor[posIndex].number = 5;          
+  motor[posIndex].speed = 5;    
+  motor[posIndex].type = SERVO_MOTOR;   
+  motor[posIndex].steps = 90;      
+  motor[posIndex].dir = DIR1;  
 
-//        posIndex++;
-//        motor[posIndex].number = 2;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_SHOULDER;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        motor[posIndex].steps = 2250;      
-//        posIndex++;
-//        motor[posIndex].number = 3;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        motor[posIndex].steps = -500;      
+  posIndex++;
+  motor[posIndex].number = 4;          
+  motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
+  motor[posIndex].type = STEP_MOTOR;   
+  motor[posIndex].steps = -800;     
+   
+  posIndex++;
+  motor[posIndex].number = 1;          
+  motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
+  motor[posIndex].type = STEP_MOTOR;   
+  motor[posIndex].steps = 1055;      
 
-//        posIndex++;
-//        motor[posIndex].number = 4;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        motor[posIndex].steps = -500;      
+  posIndex++;
+  motor[posIndex].number = 4;          
+  motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
+  motor[posIndex].type = STEP_MOTOR;   
+  motor[posIndex].steps = 726;   
 
-
-
-//        // Close the gripper
-//        posIndex++;
-//        motor[posIndex].number = 5;          
-//        motor[posIndex].speed = 5;    
-//        motor[posIndex].type = SERVO_MOTOR;   
-//        motor[posIndex].steps = 90;      
-//        motor[posIndex].dir = DIR1;  
-//        
-//
-//        posIndex++;
-//        motor[posIndex].number = 2;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_SHOULDER;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        motor[posIndex].steps = 600;      
-//        posIndex++;
-//        motor[posIndex].number = 3;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        motor[posIndex].steps = -800;      
-//        posIndex++;
-//        motor[posIndex].number = 4;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        motor[posIndex].steps = -800;     
-//         
-//        posIndex++;
-//        motor[posIndex].number = 2;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_SHOULDER;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        motor[posIndex].steps = -600;      
-//        posIndex++;
-//        motor[posIndex].number = 3;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        motor[posIndex].steps = 800;      
-//        posIndex++;
-//        motor[posIndex].number = 4;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        motor[posIndex].steps = 800;      
-//
-//        // Open the gripper
-//        posIndex++;
-//        motor[posIndex].number = 5;          
-//        motor[posIndex].speed = 5;    
-//        motor[posIndex].type = SERVO_MOTOR;   
-//        motor[posIndex].steps = 90;      
-//        motor[posIndex].dir = DIR2;  
-//
-//        posIndex++;
-//        motor[posIndex].number = 2;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_SHOULDER;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        motor[posIndex].steps = 600;      
-//        posIndex++;
-//        motor[posIndex].number = 3;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        motor[posIndex].steps = -800;      
-//        posIndex++;
-//        motor[posIndex].number = 4;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        motor[posIndex].steps = -800;    
+  // Open the gripper
+  posIndex++;
+  motor[posIndex].number = 5;          
+  motor[posIndex].speed = 5;    
+  motor[posIndex].type = SERVO_MOTOR;   
+  motor[posIndex].steps = 90;      
+  motor[posIndex].dir = DIR2;  
+    
+  posIndex++;
+  motor[posIndex].number = 4;          
+  motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
+  motor[posIndex].type = STEP_MOTOR;   
+  motor[posIndex].steps = -917;   
 
   while(!homingDone){
     initMotors();
