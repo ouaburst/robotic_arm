@@ -302,63 +302,63 @@ void setup(){
   // servoPos = 10;
   // servoPos2 = 90;
 
-  posIndex++;
-  motor[posIndex].number = 3;          
-  motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
-  motor[posIndex].type = STEP_MOTOR;   
-  motor[posIndex].steps = -141;      
-  
-  posIndex++;
-  motor[posIndex].number = 3;          
-  motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
-  motor[posIndex].type = STEP_MOTOR;   
-  motor[posIndex].steps = 991;  
-
-  posIndex++;
-  motor[posIndex].number = 4;          
-  motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
-  motor[posIndex].type = STEP_MOTOR;   
-  motor[posIndex].steps = 1202;      
-      
-  // Close the gripper
-  posIndex++;
-  motor[posIndex].number = 5;          
-  motor[posIndex].speed = 5;    
-  motor[posIndex].type = SERVO_MOTOR;   
-  motor[posIndex].steps = 90;      
-  motor[posIndex].dir = DIR1;  
-
-  posIndex++;
-  motor[posIndex].number = 4;          
-  motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
-  motor[posIndex].type = STEP_MOTOR;   
-  motor[posIndex].steps = -800;     
-   
-  posIndex++;
-  motor[posIndex].number = 1;          
-  motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
-  motor[posIndex].type = STEP_MOTOR;   
-  motor[posIndex].steps = 1055;      
-
-  posIndex++;
-  motor[posIndex].number = 4;          
-  motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
-  motor[posIndex].type = STEP_MOTOR;   
-  motor[posIndex].steps = 726;   
-
-  // Open the gripper
-  posIndex++;
-  motor[posIndex].number = 5;          
-  motor[posIndex].speed = 5;    
-  motor[posIndex].type = SERVO_MOTOR;   
-  motor[posIndex].steps = 90;      
-  motor[posIndex].dir = DIR2;  
-    
-  posIndex++;
-  motor[posIndex].number = 4;          
-  motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
-  motor[posIndex].type = STEP_MOTOR;   
-  motor[posIndex].steps = -917;   
+//  posIndex++;
+//  motor[posIndex].number = 3;          
+//  motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
+//  motor[posIndex].type = STEP_MOTOR;   
+//  motor[posIndex].steps = -141;      
+//  
+//  posIndex++;
+//  motor[posIndex].number = 3;          
+//  motor[posIndex].speed = STEP_MOTOR_SPEED_ELBOW;    
+//  motor[posIndex].type = STEP_MOTOR;   
+//  motor[posIndex].steps = 991;  
+//
+//  posIndex++;
+//  motor[posIndex].number = 4;          
+//  motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
+//  motor[posIndex].type = STEP_MOTOR;   
+//  motor[posIndex].steps = 1202;      
+//      
+//  // Close the gripper
+//  posIndex++;
+//  motor[posIndex].number = 5;          
+//  motor[posIndex].speed = 5;    
+//  motor[posIndex].type = SERVO_MOTOR;   
+//  motor[posIndex].steps = 90;      
+//  motor[posIndex].dir = DIR1;  
+//
+//  posIndex++;
+//  motor[posIndex].number = 4;          
+//  motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
+//  motor[posIndex].type = STEP_MOTOR;   
+//  motor[posIndex].steps = -800;     
+//   
+//  posIndex++;
+//  motor[posIndex].number = 1;          
+//  motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
+//  motor[posIndex].type = STEP_MOTOR;   
+//  motor[posIndex].steps = 1055;      
+//
+//  posIndex++;
+//  motor[posIndex].number = 4;          
+//  motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
+//  motor[posIndex].type = STEP_MOTOR;   
+//  motor[posIndex].steps = 726;   
+//
+//  // Open the gripper
+//  posIndex++;
+//  motor[posIndex].number = 5;          
+//  motor[posIndex].speed = 5;    
+//  motor[posIndex].type = SERVO_MOTOR;   
+//  motor[posIndex].steps = 90;      
+//  motor[posIndex].dir = DIR2;  
+//    
+//  posIndex++;
+//  motor[posIndex].number = 4;          
+//  motor[posIndex].speed = STEP_MOTOR_SPEED_WRIST;    
+//  motor[posIndex].type = STEP_MOTOR;   
+//  motor[posIndex].steps = -917;   
 
   while(!homingDone){
     initMotors();
@@ -1133,17 +1133,26 @@ void serialEvent()
     }
 
     token = strtok(char_array, ","); 
-   
+
     while(token != NULL) {
           
           posIndex++;
           
           if(dataParam == 1){
-            motor[posIndex].number = atoi(token);            
+            motor[posIndex].number = atoi(token);     
+
+            Serial.println("======= dataParam == 1 =======");     
+            Serial.println(posIndex, DEC);     
+            Serial.println(token);     
+                   
             dataParam++;
           }
           else if(dataParam == 2){
             
+            Serial.println("======= dataParam == 2 =======");     
+            Serial.println(posIndex, DEC);    
+            Serial.println(token);                  
+
             if (strstr(token, ".") != NULL) {
               motor[posIndex].speed = atof(token);              
             }
@@ -1153,14 +1162,29 @@ void serialEvent()
             dataParam++; 
           }
           else if(dataParam == 3){
+
+            Serial.println("======= dataParam == 3 =======");     
+            Serial.println(posIndex, DEC);  
+            Serial.println(token);                    
+            
             motor[posIndex].type = atoi(token);              
             dataParam++; 
           }
           else if(dataParam == 4){
+
+            Serial.println("======= dataParam == 4 =======");     
+            Serial.println(posIndex, DEC);     
+            Serial.println(token);                 
+            
             motor[posIndex].steps = atoi(token);              
             dataParam++; 
           }
           else if(dataParam == 5){
+
+            Serial.println("======= dataParam == 5 =======");     
+            Serial.println(posIndex, DEC);     
+            Serial.println(token);     
+                        
             motor[posIndex].dir = atoi(token);              
           }
       
