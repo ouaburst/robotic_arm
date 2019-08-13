@@ -284,7 +284,16 @@ void setup(){
   // Wrist: 2000, -500
   // Servo Wrist: 145
   // Servo Gripper: 145
-  
+
+
+  //---------- Init positions ---------
+  // 500 Wrist
+  // 500 Elbow
+  // 1000 Shoulder
+  // 1300 Base
+  // servoPos = 10;
+  // servoPos2 = 90;
+
         posIndex++;
         motor[posIndex].number = 1;          
         motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
@@ -1004,7 +1013,7 @@ void initMotors(){
       if(!homingWrist){
         rotate(-100, 0.10, 4);
         if(!digitalRead(wristSwich1)){          
-          rotate(500, STEP_MOTOR_SPEED_BASE, 4);
+          rotate(500, STEP_MOTOR_SPEED_WRIST, 4);
           homingWrist = 1;  
         }
       }
@@ -1029,7 +1038,7 @@ void initMotors(){
       if(!homingBase && homingShoulder && homingWrist && homingElbow){
         rotate(-100, 0.10, 1);
         if(!digitalRead(baseSwich2)){          
-          rotate(1300, STEP_MOTOR_SPEED_SHOULDER, 1);
+          rotate(1300, STEP_MOTOR_SPEED_BASE, 1);
           //rotate(2300, 0.10, 1);
           homingBase = 1;            
         }
