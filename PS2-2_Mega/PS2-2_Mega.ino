@@ -363,22 +363,6 @@ void setup(){
   while(!homingDone){
     initMotors();
   }
-
- 
-    
-
-//        for(int i=0 ; i<10; i++){
-//          myservo.write(i);
-//          delay(5);                                    
-//        }                
-
-
-//        for(int i=0 ; i<200; i++){
-//          servoPos--; 
-//          myservo.write(servoPos);
-//          delay(5);                                    
-//        }                
-        
 }
 
 void loop() {
@@ -386,16 +370,15 @@ void loop() {
   if(error == 1) //skip loop if no controller found
     return; 
 
-    
     //---------------------------------------
     // ----------- Play sequence  -----------
     //---------------------------------------
 
     if(play){
         // Init motors before play sequences
-//        while(!homingDone){
-//          initMotors();
-//        }
+        while(!homingDone){
+          initMotors();
+        }
         play = 0;        
         playSequence = 1;
     }
@@ -408,14 +391,16 @@ void loop() {
 
             Serial.print("Servonr: ");                                 
             Serial.println(motor[i].number, DEC);                                             
+            Serial.print("Speed: ");                                 
+            Serial.println(motor[i].speed, DEC);                                             
+            Serial.print("Type: ");                                 
+            Serial.println(motor[i].type, DEC);                                                                   
             Serial.print("Steps: ");                                 
             Serial.println(motor[i].steps, DEC);                                 
-            Serial.print("Speed: ");                                 
-            Serial.println(motor[i].speed, DEC);                                 
-            Serial.print("Type: ");                                 
-            Serial.println(motor[i].type, DEC);                                                       
             Serial.print("Dir: ");                                 
             Serial.println(motor[i].dir, DEC);                                                       
+
+            Serial.println(String(motor[i].number) + "," + String(motor[i].speed) + "," + String(motor[i].type) + "," + String(motor[i].steps) + "," + String(motor[i].dir));
 
             // ------------ Step motors --------------
                     
@@ -699,8 +684,9 @@ void loop() {
     // -----------------------------------------------
         
       if(ps2x.ButtonPressed(PSB_CIRCLE)){
-            play = 1;                              
-            Serial.println("Play...");            
+        play = 1;        
+        homingDone = 0;                      
+        Serial.println("Play...");            
       }       
 
     //------------------------------------
@@ -708,7 +694,7 @@ void loop() {
     //------------------------------------
     
     if(!stopBasePos1){
-      if((ps2x.Analog(PSS_RX) == 0)){
+      if((ps2x.Analog(PSS_RX) == 255)){
         if(pssLYUpM2 == 0){
           pssLYUpM2 = 1;     
           posIndex++;
@@ -734,7 +720,7 @@ void loop() {
     }
 
     if(!stopBasePos2){
-      if((ps2x.Analog(PSS_RX) == 255)){
+      if((ps2x.Analog(PSS_RX) == 0)){
         if(pssLYDownM2 == 0){
           pssLYDownM2 = 1;
           posIndex++;
@@ -881,7 +867,7 @@ void loop() {
     //------------------------------------
 
     if(!stopWristPos2){
-      if((ps2x.Analog(PSS_LY) == 0)){
+      if((ps2x.Analog(PSS_LY) == 255)){
         if(pssLYUpM4 == 0){
           pssLYUpM4 = 1;        
           posIndex++;
@@ -908,7 +894,7 @@ void loop() {
     }
 
     if(!stopWristPos1){
-      if((ps2x.Analog(PSS_LY) == 255)){
+      if((ps2x.Analog(PSS_LY) == 0)){
         if(pssLYDownM4 == 0){
           pssLYDownM4 = 1;
           posIndex++;
@@ -935,7 +921,19 @@ void loop() {
     }
     }
 
-    //==========================================================
+    //----------------------------------------------------
+    // ------ Send pos sequence to the serial port -------
+    //----------------------------------------------------
+
+    if(ps2x.ButtonReleased(PSB_SQUARE)){
+    
+      for(int i=1 ; i<posIndex+1 ; i++){            
+        Serial.println(String(motor[i].number) + "," + String(motor[i].speed) + "," + String(motor[i].type) + "," + String(motor[i].steps) + "," + String(motor[i].dir));
+      }
+      
+    }
+
+    //==========================================================     
 
     ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
     
@@ -974,9 +972,8 @@ void loop() {
 //    if(ps2x.NewButtonState(PSB_CROSS))               //will be TRUE if button was JUST pressed OR released
 //      Serial.println("X just changed");    
 //    
-//    if(ps2x.ButtonReleased(PSB_SQUARE))              //will be TRUE if button was JUST released
-//      Serial.println("Square just released");     
-//    
+
+    
 }
 
 // ---------------------------------
@@ -1173,5 +1170,4 @@ void serialEvent()
 
   Serial.println("No more data");  
 
-  DisplayData = 1;
 }
