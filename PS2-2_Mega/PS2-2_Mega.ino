@@ -1121,74 +1121,57 @@ void rotate(int steps, float speed, int motor) {
 
 void serialEvent()
 {
+
   while(Serial.available()){
     
     dataParam = 1;
-    
+    posIndex++;
+     
     if(Serial.available()){
       serialData = Serial.readStringUntil('\n');
       strcpy(char_array, serialData.c_str()); 
-    }else{
-      play = 1;  
     }
-
-    token = strtok(char_array, ","); 
-
+    
+    token = strtok(char_array, ",");
+   
     while(token != NULL) {
           
-          posIndex++;
-          
           if(dataParam == 1){
-            motor[posIndex].number = atoi(token);     
-
-            Serial.println("======= dataParam == 1 =======");     
-            Serial.println(posIndex, DEC);     
-            Serial.println(token);     
-                   
+            motor[posIndex].number = atoi(token);            
             dataParam++;
+            Serial.println(motor[posIndex].number,DEC);
           }
-          else if(dataParam == 2){
-            
-            Serial.println("======= dataParam == 2 =======");     
-            Serial.println(posIndex, DEC);    
-            Serial.println(token);                  
-
+          else if(dataParam == 2){            
             if (strstr(token, ".") != NULL) {
-              motor[posIndex].speed = atof(token);              
+              motor[posIndex].speed = atof(token);     
             }
             else{
               motor[posIndex].speed = atoi(token);              
             }           
-            dataParam++; 
+            dataParam++;
+            Serial.println(motor[posIndex].speed,DEC);
           }
           else if(dataParam == 3){
-
-            Serial.println("======= dataParam == 3 =======");     
-            Serial.println(posIndex, DEC);  
-            Serial.println(token);                    
-            
             motor[posIndex].type = atoi(token);              
             dataParam++; 
+            Serial.println(motor[posIndex].type,DEC);
           }
           else if(dataParam == 4){
-
-            Serial.println("======= dataParam == 4 =======");     
-            Serial.println(posIndex, DEC);     
-            Serial.println(token);                 
-            
             motor[posIndex].steps = atoi(token);              
             dataParam++; 
+            Serial.println(motor[posIndex].steps,DEC);
           }
           else if(dataParam == 5){
-
-            Serial.println("======= dataParam == 5 =======");     
-            Serial.println(posIndex, DEC);     
-            Serial.println(token);     
-                        
-            motor[posIndex].dir = atoi(token);              
+            motor[posIndex].dir = atoi(token);                          
+            Serial.println(motor[posIndex].dir,DEC);
+            Serial.println("============"); 
           }
       
           token = strtok(NULL, ",");
      }        
   }
+
+  Serial.println("No more data");  
+
+  DisplayData = 1;
 }
