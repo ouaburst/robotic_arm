@@ -113,10 +113,11 @@ int playSequence;
 int countSteps;
 int buzzer; 
 int homingDone;
+int playBack;
 
 // ---- Serial ----
 String serialData;
-char char_array[40];
+char char_array[256];
 char *token;
 
 // ------ servos --------
@@ -130,6 +131,8 @@ int gripperServoRotateDir2;
 int wristServoRotateDir1;
 int wristServoRotateDir2;
 int servoSteps;
+int initCounter;
+int DisplayData;
 
 // --------- Struct -----------
 
@@ -142,6 +145,12 @@ typedef struct {
 } Motors[250];          // dir=DIR1 add (++), dir=DIR2 substract (--)
 
 Motors motor;
+
+typedef struct {
+  char bufferArray[22];
+} SerialBuffers[50];
+
+SerialBuffers serialBuffer;
 
 int testLoop;
 int n;
@@ -190,6 +199,9 @@ void setup(){
   play = 0;
   playSequence = 0;
   servoSteps = 0;
+  initCounter = 1;
+  DisplayData = 0;
+  playBack = 0;
   //------------ PS2 ---------------   
 
   //setup pins and settings: GamePad(clock, command, attention, data, Pressures?, Rumble?) check for error
@@ -270,8 +282,10 @@ void setup(){
   pinMode(STEP_PIN_M4, OUTPUT);
   // -------------------------
 
-//  Serial.begin(9600);
+  //Serial.begin(9600);
   Serial.begin(19200);
+
+  //Serial.setTimeout(5000);
 
   //----------------------------
   // --------- Homing ----------
@@ -292,7 +306,6 @@ void setup(){
   // Wrist: 2000, -500
   // Servo Wrist: 145
   // Servo Gripper: 145
-
 
   //---------- Init positions ---------
   // 500 Wrist
@@ -363,6 +376,24 @@ void setup(){
   while(!homingDone){
     initMotors();
   }
+
+//  if(DisplayData){
+//
+//      Serial.println("++++++++++++ Display Data ++++++++++++++++");
+//
+//    for(int i=1; i<posIndex ; i++){
+//
+//      Serial.println(motor[i].number,DEC);
+//      Serial.println(motor[i].speed,DEC);
+//      Serial.println(motor[i].type,DEC);
+//      Serial.println(motor[i].steps,DEC);
+//      Serial.println(motor[i].dir,DEC);
+//      Serial.println("-------------------");
+//    }
+//
+//    DisplayData = 0;
+//  }
+  
 }
 
 void loop() {
@@ -381,6 +412,7 @@ void loop() {
         }
         play = 0;        
         playSequence = 1;
+        initCounter = 1;      
     }
     
     if(playSequence){
@@ -399,7 +431,7 @@ void loop() {
 //            Serial.println(motor[i].steps, DEC);                                 
 //            Serial.print("Dir: ");                                 
 //            Serial.println(motor[i].dir, DEC);                                                       
-//
+
 //            Serial.println(String(motor[i].number) + "," + String(motor[i].speed) + "," + String(motor[i].type) + "," + String(motor[i].steps) + "," + String(motor[i].dir));
 
             // ------------ Step motors --------------
@@ -480,10 +512,91 @@ void loop() {
         //delay(5000);
         playSequence = 0;        
     }
+
+    //----------------------------------
+    // ----------- Play back -----------
+    //----------------------------------
+
+    if(playBack){
+      
+        // ------------ Step motors --------------
+                
+        if(motor[posIndex].type == STEP_MOTOR){          
+          rotate(-motor[posIndex].steps, motor[posIndex].speed, motor[posIndex].number);  
+        }
+
+        // ------------ Servos motors --------------
+        
+        if(motor[posIndex].type == SERVO_MOTOR){
+
+          // ----------------- Servo1, Gripper --------------------              
+
+          if(motor[posIndex].number == 5 && motor[posIndex].dir == DIR1){                
+
+//                Serial.println("Motornr 5");       
+//                Serial.println("DIR1");       
+                          
+            for(int j=0 ; j < motor[posIndex].steps; j++){
+              servoPos--;  
+              myservo.write(servoPos);
+              delay(motor[posIndex].speed);                                    
+            }       
+            delay(1000);
+//                Serial.println(servoPos, DEC);       
+                                                    
+          }
+          
+          if(motor[posIndex].number == 5 && motor[posIndex].dir == DIR2){
+
+//                Serial.println("Motornr 5");       
+//                Serial.println("DIR2");                       
+            
+            for(int j=0 ; j < motor[posIndex].steps; j++){
+              servoPos++;  
+              myservo.write(servoPos);
+              delay(motor[posIndex].speed);                                    
+            }    
+            delay(1000);
+//                Serial.println(servoPos, DEC);                                                                  
+          }
+
+          // ----------------- Servo2, Wrist --------------------
+          
+          if(motor[posIndex].number == 6 && motor[posIndex].dir == DIR1){
+
+//                Serial.println("Motornr 6");       
+//                Serial.println("DIR1");                       
+          
+            for(int j=0 ; j < motor[posIndex].steps; j++){
+              servoPos2--;
+              myservo2.write(servoPos2);
+              delay(motor[posIndex].speed);                                    
+            }            
+            delay(1000);
+//                Serial.println(servoPos2, DEC);       
+          }              
+
+          if(motor[posIndex].number == 6 && motor[posIndex].dir == DIR2){
+
+//                Serial.println("Motornr 6");       
+//                Serial.println("DIR2");                       
+          
+            for(int j=0 ; j < motor[posIndex].steps; j++){
+              servoPos2++;
+              myservo2.write(servoPos2);
+              delay(motor[posIndex].speed);                                    
+            }    
+            delay(1000);
+//                Serial.println(servoPos2, DEC);                                   
+          }              
+        }
+        posIndex--;
+        playBack = 0;         
+      }
     
     // --------------------------------------
 
-    if(!play && !playSequence){ 
+    if(!play && !playSequence && !playBack){ 
 
       //---------------------------------------
       // ------------- Switches ---------------
@@ -930,12 +1043,37 @@ void loop() {
     //----------------------------------------------------
 
     if(ps2x.ButtonReleased(PSB_SQUARE)){
+
+       Serial.println(posIndex, DEC);
     
       for(int i=1 ; i<posIndex+1 ; i++){            
         Serial.println(String(motor[i].number) + "," + String(motor[i].speed) + "," + String(motor[i].type) + "," + String(motor[i].steps) + "," + String(motor[i].dir));
       }
       
     }
+
+    //-----------------------------
+    // ------ Back position -------
+    //-----------------------------
+
+    if(ps2x.ButtonReleased(PSB_CROSS)){
+
+        if(posIndex > 0)
+          playBack = 1;
+
+        Serial.println(posIndex, DEC);        
+        Serial.println("Back one step");
+        Serial.println("=============");
+
+        if(posIndex == 0)
+          Serial.println("No more steps");
+
+        for(int i=1 ; i<posIndex+1 ; i++){            
+          Serial.println(String(motor[i].number) + "," + String(motor[i].speed) + "," + String(motor[i].type) + "," + String(motor[i].steps) + "," + String(motor[i].dir));
+      }
+
+    }
+      
 
     //==========================================================     
 
@@ -1006,14 +1144,13 @@ void initMotors(){
         rotate(-100, 0.10, 2);
         if(!digitalRead(shoulderSwich2)){          
           rotate(1000, STEP_MOTOR_SPEED_SHOULDER, 2);
-         // rotate(1500, 0.10, 4);
           homingShoulder = 1;  
         }
       }
            
       if(!homingBase && homingShoulder && homingWrist && homingElbow){
         rotate(-100, 0.10, 1);
-        if(!digitalRead(baseSwich2)){          
+        if(!digitalRead(baseSwich1)){          
           rotate(1300, STEP_MOTOR_SPEED_BASE, 1);
           //rotate(2300, 0.10, 1);
           homingBase = 1;            
@@ -1122,56 +1259,68 @@ void rotate(int steps, float speed, int motor) {
 
 void serialEvent()
 {
+  if(initCounter){
+    posIndex = 0;
+    initCounter = 0;      
+  }
 
-  while(Serial.available()){
-    
+  while(Serial.available()){    
     dataParam = 1;
     posIndex++;
      
     if(Serial.available()){
       serialData = Serial.readStringUntil('\n');
-      strcpy(char_array, serialData.c_str()); 
+      strcpy(serialBuffer[posIndex].bufferArray, serialData.c_str()); 
     }
+  }
+  
+  if(serialData.equals("END")){
+    Serial.println("No more data"); 
     
-    token = strtok(char_array, ",");
-   
-    while(token != NULL) {
-          
-          if(dataParam == 1){
-            motor[posIndex].number = atoi(token);            
-            dataParam++;
-            Serial.println(motor[posIndex].number,DEC);
-          }
-          else if(dataParam == 2){            
-            if (strstr(token, ".") != NULL) {
-              motor[posIndex].speed = atof(token);     
-            }
-            else{
-              motor[posIndex].speed = atoi(token);              
-            }           
-            dataParam++;
-            Serial.println(motor[posIndex].speed,DEC);
-          }
-          else if(dataParam == 3){
-            motor[posIndex].type = atoi(token);              
-            dataParam++; 
-            Serial.println(motor[posIndex].type,DEC);
-          }
-          else if(dataParam == 4){
-            motor[posIndex].steps = atoi(token);              
-            dataParam++; 
-            Serial.println(motor[posIndex].steps,DEC);
-          }
-          else if(dataParam == 5){
-            motor[posIndex].dir = atoi(token);                          
-            Serial.println(motor[posIndex].dir,DEC);
-            Serial.println("============"); 
-          }
+    for(int i=1 ; i < posIndex+1 ; i++){
+
+      token = strtok(serialBuffer[i].bufferArray, ",");
+      dataParam = 1;
       
-          token = strtok(NULL, ",");
-     }        
+      while(token != NULL) {
+        
+        if(dataParam == 1){
+          motor[i].number = atoi(token);            
+          dataParam++;
+          Serial.println(motor[i].number,DEC);
+        }
+        else if(dataParam == 2){            
+          if (strstr(token, ".") != NULL) {
+            motor[i].speed = atof(token);     
+          }
+          else{
+            motor[i].speed = atoi(token);              
+          }           
+          dataParam++;
+          Serial.println(motor[i].speed,DEC);
+        }
+        else if(dataParam == 3){
+          motor[i].type = atoi(token);              
+          dataParam++; 
+          Serial.println(motor[i].type,DEC);
+        }
+        else if(dataParam == 4){
+          motor[i].steps = atoi(token);              
+          dataParam++; 
+          Serial.println(motor[i].steps,DEC);
+        }
+        else if(dataParam == 5){
+          motor[i].dir = atoi(token);  
+          Serial.println(motor[i].dir,DEC);
+          Serial.println("============"); 
+        }      
+        token = strtok(NULL, ",");
+      }             
+    }     
+    homingDone = 0;  
+    play = 1;       
   }
 
-  Serial.println("No more data");  
+  
 
 }

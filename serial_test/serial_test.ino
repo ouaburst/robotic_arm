@@ -11,6 +11,7 @@ int dataParam;
 String serialData;
 int posIndex;
 int DisplayData;
+int initCounter;
 
 typedef struct {
    int number;
@@ -18,10 +19,15 @@ typedef struct {
    float speed;
    int type;            // type servo, stepper
    int dir=0;           // dir. Used only for servo,
-} Motors[20];          // dir=DIR1 add (++), dir=DIR2 substract (--)
+} Motors[250];          // dir=DIR1 add (++), dir=DIR2 substract (--)
 
 Motors motor;
 
+typedef struct {
+  char bufferArray[22];
+} SerialBuffers[50];
+
+SerialBuffers serialBuffer;
 
 
 void setup() {
@@ -30,20 +36,24 @@ void setup() {
   Serial.println("Ready..."); 
   DisplayData = 0;
   posIndex = 0;
+  //Serial.setTimeout(5000);
+  initCounter = 1;
 }
 
 void loop() {
 
   if(DisplayData){
 
-    for(int i=1; i<posIndex+1 ; i++){
+      Serial.println("++++++++++++ Display Data ++++++++++++++++");
+
+    for(int i=1; i<posIndex ; i++){
 
       Serial.println(motor[i].number,DEC);
       Serial.println(motor[i].speed,DEC);
       Serial.println(motor[i].type,DEC);
       Serial.println(motor[i].steps,DEC);
       Serial.println(motor[i].dir,DEC);
-      Serial.println("---------------");
+      Serial.println("-------------------");
     }
 
     DisplayData = 0;
@@ -53,6 +63,10 @@ void loop() {
 
 void serialEvent()
 {
+  if(initCounter){
+    posIndex = 0;
+    initCounter = 0;      
+  }
 
   while(Serial.available()){
     
@@ -61,84 +75,105 @@ void serialEvent()
      
     if(Serial.available()){
       serialData = Serial.readStringUntil('\n');
-      strcpy(char_array, serialData.c_str()); 
+      Serial.println(serialData);
+
+      strcpy(serialBuffer[posIndex].bufferArray, serialData.c_str()); 
+      //strcpy(char_array, serialData.c_str()); 
+
     }
-    
-    token = strtok(char_array, ",");
-   
-    while(token != NULL) {
+  }
+
+  if(serialData.equals("END")){
+    Serial.println("No more data"); 
+  
+    for(int i=1 ; i < posIndex+1 ; i++){
+
+        token = strtok(serialBuffer[i].bufferArray, ",");
+        dataParam = 1;
+        
+        while(token != NULL) {
           
           if(dataParam == 1){
-            motor[posIndex].number = atoi(token);            
+            motor[i].number = atoi(token);            
             dataParam++;
-            Serial.println(motor[posIndex].number,DEC);
+            Serial.println(motor[i].number,DEC);
           }
           else if(dataParam == 2){            
             if (strstr(token, ".") != NULL) {
-              motor[posIndex].speed = atof(token);     
+              motor[i].speed = atof(token);     
             }
             else{
-              motor[posIndex].speed = atoi(token);              
+              motor[i].speed = atoi(token);              
             }           
             dataParam++;
-            Serial.println(motor[posIndex].speed,DEC);
+            Serial.println(motor[i].speed,DEC);
           }
           else if(dataParam == 3){
-            motor[posIndex].type = atoi(token);              
+            motor[i].type = atoi(token);              
             dataParam++; 
-            Serial.println(motor[posIndex].type,DEC);
+            Serial.println(motor[i].type,DEC);
           }
           else if(dataParam == 4){
-            motor[posIndex].steps = atoi(token);              
+            motor[i].steps = atoi(token);              
             dataParam++; 
-            Serial.println(motor[posIndex].steps,DEC);
+            Serial.println(motor[i].steps,DEC);
           }
           else if(dataParam == 5){
-            motor[posIndex].dir = atoi(token);                          
-            Serial.println(motor[posIndex].dir,DEC);
+            motor[i].dir = atoi(token);  
+            Serial.println(motor[i].dir,DEC);
             Serial.println("============"); 
-          }
-      
+          }      
           token = strtok(NULL, ",");
-     }        
+        }             
+     }    
+
+
+     
   }
-
-  Serial.println("No more data");  
-
-  DisplayData = 1;
+    
 
 
+//    token = strtok(char_array, ",");
+//   
+//    while(token != NULL) {
+//          
+//          if(dataParam == 1){
+//            motor[posIndex].number = atoi(token);            
+//            dataParam++;
+//            Serial.println(motor[posIndex].number,DEC);
+//          }
+//          else if(dataParam == 2){            
+//            if (strstr(token, ".") != NULL) {
+//              motor[posIndex].speed = atof(token);     
+//            }
+//            else{
+//              motor[posIndex].speed = atoi(token);              
+//            }           
+//            dataParam++;
+//            Serial.println(motor[posIndex].speed,DEC);
+//          }
+//          else if(dataParam == 3){
+//            motor[posIndex].type = atoi(token);              
+//            dataParam++; 
+//            Serial.println(motor[posIndex].type,DEC);
+//          }
+//          else if(dataParam == 4){
+//            motor[posIndex].steps = atoi(token);              
+//            dataParam++; 
+//            Serial.println(motor[posIndex].steps,DEC);
+//          }
+//          else if(dataParam == 5){
+//            motor[posIndex].dir = atoi(token);                          
+//            Serial.println(motor[posIndex].dir,DEC);
+//            Serial.println("============"); 
+//          }
+//      
+//          token = strtok(NULL, ",");
+//     } 
 
   
-//  while(Serial.available()){
-//    
-//    if(Serial.available()){
-//        data = Serial.readStringUntil('\n');
-//        //Serial.println("Result, " + data);
-//
-//        strcpy(char_array, data.c_str()); 
-//    }
-//
-//   token = strtok(char_array, ",");
-//   
-//   while(token != NULL) {
-//
-//      n = 0;
-//      
-//      Serial.write(token);    
-//      Serial.println("");
-//
-//      n = atoi(token) + 1;
-//     Serial.println(n, DEC);
-//      
-//      if (strstr(token, ".") != NULL) {
-//          Serial.println("Is float");
-//      }
-//      
-//      token = strtok(NULL, ",");
-//   }
-//
-//   Serial.println("============");
-//        
-//  }
+  DisplayData = 1;
+  //homingDone = 0;  
+  //play = 1;
+
 }
