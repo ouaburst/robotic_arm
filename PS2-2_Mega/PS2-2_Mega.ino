@@ -591,6 +591,15 @@ void loop() {
           }              
         }
         posIndex--;
+
+        Serial.println("Back one step");
+        Serial.println("=============");
+        Serial.println(posIndex, DEC);        
+                
+        for(int i=1 ; i<posIndex+1 ; i++){            
+          Serial.println(String(motor[i].number) + "," + String(motor[i].speed) + "," + String(motor[i].type) + "," + String(motor[i].steps) + "," + String(motor[i].dir));
+        }
+
         playBack = 0;         
       }
     
@@ -752,8 +761,8 @@ void loop() {
           wristServoRotateDir2 = 0;
           servoSteps = 0;
           
-//          Serial.println("");           
-//          Serial.println("S2");               
+          Serial.print("--> Posindex: ");           
+          Serial.println(posIndex, DEC);           
         }        
         servoPos2 -= 1;
         servoSteps++;
@@ -780,8 +789,8 @@ void loop() {
           wristServoRotateDir1 = 0;
           servoSteps = 0;
           
-//          Serial.println("");           
-//          Serial.println("S2");     
+          Serial.print("--> Posindex: ");           
+          Serial.println(posIndex, DEC);           
         }        
         servoPos2 += 1;
         servoSteps++;
@@ -794,16 +803,6 @@ void loop() {
         delay(5); 
       }
     }   
-
-    // -----------------------------------------------
-    // ------ Press button for playing sample --------
-    // -----------------------------------------------
-        
-      if(ps2x.ButtonPressed(PSB_CIRCLE)){
-        play = 1;        
-        homingDone = 0;                      
-        Serial.println("Play...");            
-      }       
 
     //------------------------------------
     // ------ stepper motor#1 Base -------
@@ -819,8 +818,8 @@ void loop() {
           motor[posIndex].type = STEP_MOTOR;   
           countSteps = 0;   
                       
-//          Serial.println("");           
-//          Serial.println("B");           
+          Serial.print("--> Posindex: ");           
+          Serial.println(posIndex, DEC);           
         }                
         if(pos2M2 > 0 && pssLYDownM2 == 1){
           pos2M2 = 0;
@@ -831,8 +830,12 @@ void loop() {
         motor[posIndex].steps = countSteps;        
         rotate(pos2M2, 0.10, 1);
 
-//        Serial.print(":");        
-//        Serial.print(countSteps, DEC);
+        pssLYUpM1 = 0;
+        pssLYDownM1 = 0;
+        pssLYUpM3 = 0;
+        pssLYDownM3 = 0;
+        pssLYUpM4 = 0;
+        pssLYDownM4 = 0;                   
       }        
     }
 
@@ -846,8 +849,8 @@ void loop() {
           motor[posIndex].type = STEP_MOTOR;                     
           countSteps = 0;  
                    
-//          Serial.println("");                     
-//          Serial.println("B");           
+          Serial.print("--> Posindex: ");           
+          Serial.println(posIndex, DEC);           
         }          
         if(pos2M2 < 0 && pssLYUpM2 == 1){
           pos2M2 = 0;
@@ -857,9 +860,13 @@ void loop() {
         countSteps--; 
         motor[posIndex].steps = countSteps;  
         rotate(pos2M2, 0.10, 1);
-        
-//        Serial.print(":");            
-//        Serial.print(countSteps, DEC);
+
+        pssLYUpM1 = 0;
+        pssLYDownM1 = 0;
+        pssLYUpM3 = 0;
+        pssLYDownM3 = 0;
+        pssLYUpM4 = 0;
+        pssLYDownM4 = 0;                   
       }     
     }
 
@@ -877,8 +884,8 @@ void loop() {
           motor[posIndex].type = STEP_MOTOR;   
           countSteps = 0; 
           
-//          Serial.println("");                     
-//          Serial.println("S");            
+          Serial.print("--> Posindex: ");           
+          Serial.println(posIndex, DEC);           
         }                   
         if(pos1M1 > 0 && pssLYDownM1 == 1){
           pos1M1 = 0;
@@ -887,10 +894,14 @@ void loop() {
         pos1M1=1;
         countSteps++;        
         motor[posIndex].steps = countSteps;          
-        rotate(pos1M1, 0.10, 2);
-        
-//        Serial.print(":");                
-//        Serial.print(countSteps, DEC);
+        rotate(pos1M1, 0.10, 2);        
+
+        pssLYUpM2  = 0;
+        pssLYDownM2 = 0;
+        pssLYUpM3 = 0;
+        pssLYDownM3 = 0;
+        pssLYUpM4 = 0;
+        pssLYDownM4 = 0;                  
       }      
     }
 
@@ -904,8 +915,8 @@ void loop() {
           motor[posIndex].type = STEP_MOTOR;   
           countSteps = 0;
           
-//          Serial.println("");                     
-//          Serial.println("S");           
+          Serial.print("--> Posindex: ");           
+          Serial.println(posIndex, DEC);           
         }                             
         if(pos2M1 < 0 && pssLYUpM1 == 1){
           pos2M1 = 0;
@@ -915,9 +926,13 @@ void loop() {
         countSteps--;        
         motor[posIndex].steps = countSteps;                  
         rotate(pos2M1, 0.10, 2);
-        
-//        Serial.print(":");        
-//        Serial.print(countSteps, DEC);
+
+        pssLYUpM2  = 0;
+        pssLYDownM2 = 0;
+        pssLYUpM3 = 0;
+        pssLYDownM3 = 0;
+        pssLYUpM4 = 0;
+        pssLYDownM4 = 0;                            
       }          
     }
 
@@ -935,8 +950,8 @@ void loop() {
           motor[posIndex].type = STEP_MOTOR;    
           countSteps = 0; 
            
-//          Serial.println("");                     
-//          Serial.println("E");
+          Serial.print("--> Posindex: ");           
+          Serial.println(posIndex, DEC);           
         }
         if(pos1M3 > 0 && pssLYDownM3 == 1){
           pos1M3 = 0;
@@ -947,8 +962,12 @@ void loop() {
         motor[posIndex].steps = countSteps;                
         rotate(pos1M3, 0.10, 3);
         
-//        Serial.print(":");                
-//        Serial.print(countSteps, DEC);
+        pssLYUpM2  = 0;
+        pssLYDownM2 = 0;
+        pssLYUpM1 = 0;
+        pssLYDownM1 = 0;
+        pssLYUpM4 = 0;
+        pssLYDownM4 = 0;        
       }        
     }
 
@@ -962,8 +981,8 @@ void loop() {
           motor[posIndex].type = STEP_MOTOR;    
           countSteps = 0;  
           
-//          Serial.println("");                        
-//          Serial.println("E");                                          
+          Serial.print("--> Posindex: ");           
+          Serial.println(posIndex, DEC);           
         }
         if(pos2M3 < 0 && pssLYUpM3 == 1){
           pos2M3 = 0;
@@ -973,9 +992,13 @@ void loop() {
         countSteps--;        
         motor[posIndex].steps = countSteps;                        
         rotate(pos2M3, 0.10, 3);
-        
-//        Serial.print(":");        
-//        Serial.print(countSteps, DEC);
+
+        pssLYUpM2  = 0;
+        pssLYDownM2 = 0;
+        pssLYUpM1 = 0;
+        pssLYDownM1 = 0;
+        pssLYUpM4 = 0;
+        pssLYDownM4 = 0;                            
       }            
     }
     
@@ -993,8 +1016,8 @@ void loop() {
           motor[posIndex].type = STEP_MOTOR;    
           countSteps = 0;   
 
-//          Serial.println("");                         
-//          Serial.println("W");
+          Serial.print("--> Posindex: ");           
+          Serial.println(posIndex, DEC);           
         }         
         if(pos1M4 > 0 && pssLYDownM4 == 1){
           pos1M4 = 0;
@@ -1004,9 +1027,13 @@ void loop() {
         countSteps++;        
         motor[posIndex].steps = countSteps;                                
         rotate(pos1M4, 0.10, 4);
-        
-//        Serial.print(":");                
-//        Serial.print(countSteps, DEC);
+
+        pssLYUpM2  = 0;
+        pssLYDownM2 = 0;
+        pssLYUpM1 = 0;
+        pssLYDownM1 = 0;
+        pssLYUpM3 = 0;
+        pssLYDownM3 = 0;        
       }        
     }
 
@@ -1020,8 +1047,8 @@ void loop() {
           motor[posIndex].type = STEP_MOTOR;    
           countSteps = 0;  
 
-//          Serial.println("");                              
-//          Serial.println("W");                                   
+          Serial.print("--> Posindex: ");           
+          Serial.println(posIndex, DEC);           
         }          
         if(pos2M4 < 0 && pssLYUpM4 == 1){
           pos2M4 = 0;
@@ -1031,9 +1058,13 @@ void loop() {
         countSteps--;        
         motor[posIndex].steps = countSteps;                                        
         rotate(pos2M4, 0.10, 4);
-        
-//        Serial.print(":");        
-//        Serial.print(countSteps, DEC);
+
+        pssLYUpM2  = 0;
+        pssLYDownM2 = 0;
+        pssLYUpM1 = 0;
+        pssLYDownM1 = 0;
+        pssLYUpM3 = 0;
+        pssLYDownM3 = 0;                  
       }      
     }
     }
@@ -1043,13 +1074,12 @@ void loop() {
     //----------------------------------------------------
 
     if(ps2x.ButtonReleased(PSB_SQUARE)){
-
-       Serial.println(posIndex, DEC);
-    
+      
+      Serial.println(">>> Sequence <<<");    
+      Serial.println(posIndex, DEC);    
       for(int i=1 ; i<posIndex+1 ; i++){            
         Serial.println(String(motor[i].number) + "," + String(motor[i].speed) + "," + String(motor[i].type) + "," + String(motor[i].steps) + "," + String(motor[i].dir));
       }
-      
     }
 
     //-----------------------------
@@ -1061,20 +1091,20 @@ void loop() {
         if(posIndex > 0)
           playBack = 1;
 
-        Serial.println(posIndex, DEC);        
-        Serial.println("Back one step");
-        Serial.println("=============");
-
-        if(posIndex == 0)
+        if(posIndex == 1)
           Serial.println("No more steps");
-
-        for(int i=1 ; i<posIndex+1 ; i++){            
-          Serial.println(String(motor[i].number) + "," + String(motor[i].speed) + "," + String(motor[i].type) + "," + String(motor[i].steps) + "," + String(motor[i].dir));
-      }
-
     }
       
-
+    // -----------------------------------------------
+    // ------ Press button for playing sample --------
+    // -----------------------------------------------
+        
+      if(ps2x.ButtonPressed(PSB_CIRCLE)){
+        play = 1;        
+        homingDone = 0;                      
+        Serial.println("Play...");            
+      }       
+      
     //==========================================================     
 
     ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
@@ -1127,33 +1157,36 @@ void initMotors(){
       if(!homingWrist){
         rotate(-100, 0.10, 4);
         if(!digitalRead(wristSwich1)){          
-          rotate(500, STEP_MOTOR_SPEED_WRIST, 4);
+          //rotate(500, STEP_MOTOR_SPEED_WRIST, 4);
+          rotate(150, 0.05, 4);
           homingWrist = 1;  
         }
       }
+
+      if(!homingBase && homingWrist){
+        rotate(-100, 0.10, 1);
+        if(!digitalRead(baseSwich1)){          
+          //rotate(1300, STEP_MOTOR_SPEED_BASE, 1);
+          rotate(150, 0.05, 1);
+          homingBase = 1;            
+        }
+      }        
       
-      if(!homingElbow && homingWrist ){
+      if(!homingElbow && homingWrist && homingBase){
         rotate(-100, 0.10, 3);
         if(!digitalRead(elbowSwich2)){          
-          rotate(500, STEP_MOTOR_SPEED_ELBOW, 3);
+          //rotate(500, STEP_MOTOR_SPEED_ELBOW, 3);
+          rotate(150, 0.05, 3);
           homingElbow = 1;  
         }
       }
-         
-      if(!homingShoulder && homingWrist && homingElbow){
+                    
+      if(!homingShoulder && homingBase && homingWrist && homingElbow){
         rotate(-100, 0.10, 2);
         if(!digitalRead(shoulderSwich2)){          
-          rotate(1000, STEP_MOTOR_SPEED_SHOULDER, 2);
+          //rotate(1000, STEP_MOTOR_SPEED_SHOULDER, 2);
+          rotate(150, 0.05, 2);
           homingShoulder = 1;  
-        }
-      }
-           
-      if(!homingBase && homingShoulder && homingWrist && homingElbow){
-        rotate(-100, 0.10, 1);
-        if(!digitalRead(baseSwich1)){          
-          rotate(1300, STEP_MOTOR_SPEED_BASE, 1);
-          //rotate(2300, 0.10, 1);
-          homingBase = 1;            
         }
       }  
 
