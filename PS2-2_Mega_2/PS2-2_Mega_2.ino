@@ -93,8 +93,15 @@ int stopShoulderPos1;
 int stopShoulderPos2;
 
 // --- Misc ---
-
 int buzzer; 
+int homingDone;
+
+int homingBase;
+int homingShoulder;
+int homingWrist;
+int homingElbow;
+
+int pos;
 
 void setup(){  
 
@@ -147,8 +154,8 @@ void setup(){
    }
 
   //--------------------------------------------
+
   Serial.begin(19200);
-  //--------------------------------------------
 
   stepper.setMaxSpeed(5000);
   stepper.setAcceleration(5000);
@@ -174,6 +181,10 @@ void setup(){
   
   // ------ Misc ---------
   buzzer = 31; 
+  pinMode(buzzer, OUTPUT); 
+  noTone(buzzer); 
+
+  homingDone = 0;
 
   // ------ Limit values -------
 
@@ -185,8 +196,16 @@ void setup(){
   stopElbowPos2 = 0;
   stopShoulderPos1 = 0;
   stopShoulderPos2 = 0;
-  
 
+  homingBase = 0;
+  homingShoulder = 0;
+  homingWrist = 0;
+  homingElbow = 0;
+  pos = 0;
+
+  while(!homingDone){
+    initMotors();
+  }
 }
 
 void loop() {
@@ -238,8 +257,6 @@ void loop() {
     while (stepper.distanceToGo() !=0) {
       stepper.runSpeedToPosition();
     }
-
-      
       
     //==========================================================     
 
@@ -279,11 +296,96 @@ void loop() {
 //    
 //    if(ps2x.NewButtonState(PSB_CROSS))               //will be TRUE if button was JUST pressed OR released
 //      Serial.println("X just changed");    
-//    
-
-    
+//        
 }
 
+// ---------------------------------
+
+void initMotors(){
+
+    // --------- Homing ----------
+
+    if(!homingBase){
+
+//        stepper.runToNewPosition(-2000);
+//      stepper.moveTo(-800);
+//  
+//      while (stepper.distanceToGo() !=0) {
+//        stepper.runSpeedToPosition();
+//      }
+//   
+   
+//      if(!digitalRead(baseSwich1)){          
+//        stepper.stop();
+//        stepper.runToNewPosition(0);        
+//        homingBase = 1;  
+//      }
+
+        while(digitalRead(baseSwich2)){
+      
+          pos = pos+10;
+          stepper.moveTo(pos);
+      
+          while (stepper.distanceToGo() !=0) {
+            stepper.runSpeedToPosition();
+          }
+        }
+    }
+
+
+//      if(!homingBase && homingWrist){
+//        rotate(-100, 0.10, 1);
+//        if(!digitalRead(baseSwich1)){          
+//          //rotate(1300, STEP_MOTOR_SPEED_BASE, 1);
+//          rotate(150, 0.05, 1);
+//          homingBase = 1;            
+//        }
+//      }        
+//      
+//      if(!homingElbow && homingWrist && homingBase){
+//        rotate(-100, 0.10, 3);
+//        if(!digitalRead(elbowSwich2)){          
+//          //rotate(500, STEP_MOTOR_SPEED_ELBOW, 3);
+//          rotate(150, 0.05, 3);
+//          homingElbow = 1;  
+//        }
+//      }
+//                    
+//      if(!homingShoulder && homingBase && homingWrist && homingElbow){
+//        rotate(-100, 0.10, 2);
+//        if(!digitalRead(shoulderSwich2)){          
+//          //rotate(1000, STEP_MOTOR_SPEED_SHOULDER, 2);
+//          rotate(150, 0.05, 2);
+//          homingShoulder = 1;  
+//        }
+//      }  
+//
+//      if(homingBase && homingShoulder && homingWrist && homingElbow){
+//        homingWrist = 0;  
+//        homingElbow = 0;  
+//        homingShoulder = 0;             
+//        homingBase = 0;  
+//        
+//        //---------------------------------
+//        // --------- Init servos ----------
+//        //---------------------------------
+//
+//        servoPos = 10;
+//        servoPos2 = 90;
+//       
+//        for(int i=0 ; i<servoPos; i++){
+//          myservo.write(i);
+//          delay(5);                                    
+//        }                
+//  
+//        for(int i=0 ; i<servoPos2;  i++){
+//          myservo2.write(i);
+//          delay(5);                                    
+//        }        
+//
+//        homingDone = 1;
+//      }
+}
 
 
 
