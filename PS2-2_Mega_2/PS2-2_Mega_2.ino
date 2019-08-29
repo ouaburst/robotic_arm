@@ -321,7 +321,7 @@ void initMotors(){
 //        homingBase = 1;  
 //      }
 
-        while(digitalRead(baseSwich2)){
+        if(!stopBasePos2){
       
           pos = pos+10;
           stepper.moveTo(pos);
@@ -329,6 +329,9 @@ void initMotors(){
           while (stepper.distanceToGo() !=0) {
             stepper.runSpeedToPosition();
           }
+        }else{
+          homingBase = 1;
+          homingDone = 1;          
         }
     }
 
