@@ -101,6 +101,8 @@ int homingShoulder;
 int homingWrist;
 int homingElbow;
 
+int endPositionBase;
+
 int pos;
 
 void setup(){  
@@ -197,6 +199,11 @@ void setup(){
   stopShoulderPos1 = 0;
   stopShoulderPos2 = 0;
 
+  // --------------------------
+  endPositionBase = 700;
+
+  // --------------------------
+  
   homingBase = 0;
   homingShoulder = 0;
   homingWrist = 0;
@@ -262,41 +269,7 @@ void loop() {
 
     ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
     
-//    if(ps2x.Button(PSB_START))         //will be TRUE as long as button is pressed
-//      Serial.println("Start is being held");
-//    
-//    if(ps2x.Button(PSB_SELECT))
-//      Serial.println("Select is being held");         
-//    vibrate = ps2x.Analog(PSAB_CROSS);  //this will set the large motor vibrate speed based on how hard you press the blue (X) button
-//    
-//    if (ps2x.NewButtonState()) {        //will be TRUE if any button changes state (on to off, or off to on)
-//    
-//      if(ps2x.Button(PSB_L3))
-//        Serial.println("L3 pressed");
-//      
-//      if(ps2x.Button(PSB_R3))
-//        Serial.println("R3 pressed");
-//      
-//      if(ps2x.Button(PSB_L2))
-//        Serial.println("L2 pressed");
-//      
-//      if(ps2x.Button(PSB_R2))
-//        Serial.println("R2 pressed");
-//     
-//       if(ps2x.Button(PSB_L1))
-//        Serial.println("L1 pressed");
-//             
-//      if(ps2x.Button(PSB_TRIANGLE))
-//        Serial.println("Triangle pressed");   
-//  
-//    }
-//
-//    if(ps2x.ButtonPressed(PSB_CIRCLE))               //will be TRUE if button was JUST pressed
-//      Serial.println("Circle just pressed");
-//    
-//    if(ps2x.NewButtonState(PSB_CROSS))               //will be TRUE if button was JUST pressed OR released
-//      Serial.println("X just changed");    
-//        
+  
 }
 
 // ---------------------------------
@@ -305,89 +278,57 @@ void initMotors(){
 
     // --------- Homing ----------
 
+//     if(!homingBase){
+//    
+//        while (digitalRead(baseSwich1)) {  
+//          stepper.moveTo(endPositionBase);  
+//          initial_homing--;  
+//          stepper.run();            
+//        }
+//    
+//     }
+//
+
+
     if(!homingBase){
 
-//        stepper.runToNewPosition(-2000);
-//      stepper.moveTo(-800);
-//  
-//      while (stepper.distanceToGo() !=0) {
-//        stepper.runSpeedToPosition();
-//      }
-//   
-   
-//      if(!digitalRead(baseSwich1)){          
-//        stepper.stop();
-//        stepper.runToNewPosition(0);        
-//        homingBase = 1;  
-//      }
-
-        if(!stopBasePos2){
-      
-          pos = pos+10;
-          stepper.moveTo(pos);
-      
-          while (stepper.distanceToGo() !=0) {
-            stepper.runSpeedToPosition();
-          }
-        }else{
-          homingBase = 1;
-          homingDone = 1;          
+        pos = pos-10;
+        stepper.moveTo(pos);
+    
+        while (stepper.distanceToGo() !=0) {
+          stepper.runSpeedToPosition();
         }
+
+        Serial.println("Move to switch "); 
+        
+        if(!digitalRead(baseSwich1)){   
+          stepper.setCurrentPosition(0);          
+          stepper.setMaxSpeed(5000);
+          stepper.setAcceleration(5000);
+          stepper.moveTo(endPositionBase);                               
+
+          Serial.println("Move back "); 
+          
+//          while (stepper.distanceToGo()!=0) {
+//            stepper.runSpeedToPosition();
+//          }
+
+          while (digitalRead(home_switch)) { 
+            stepperX.moveTo(initial_homing); 
+            initial_homing--;  
+            stepperX.run();  
+            delay(5);
+          }
+          
+          Serial.println("Finished..."); 
+          
+          stepper.setCurrentPosition(0); 
+          homingBase = 1;
+          homingDone = 1; 
+        }
+
     }
 
-
-//      if(!homingBase && homingWrist){
-//        rotate(-100, 0.10, 1);
-//        if(!digitalRead(baseSwich1)){          
-//          //rotate(1300, STEP_MOTOR_SPEED_BASE, 1);
-//          rotate(150, 0.05, 1);
-//          homingBase = 1;            
-//        }
-//      }        
-//      
-//      if(!homingElbow && homingWrist && homingBase){
-//        rotate(-100, 0.10, 3);
-//        if(!digitalRead(elbowSwich2)){          
-//          //rotate(500, STEP_MOTOR_SPEED_ELBOW, 3);
-//          rotate(150, 0.05, 3);
-//          homingElbow = 1;  
-//        }
-//      }
-//                    
-//      if(!homingShoulder && homingBase && homingWrist && homingElbow){
-//        rotate(-100, 0.10, 2);
-//        if(!digitalRead(shoulderSwich2)){          
-//          //rotate(1000, STEP_MOTOR_SPEED_SHOULDER, 2);
-//          rotate(150, 0.05, 2);
-//          homingShoulder = 1;  
-//        }
-//      }  
-//
-//      if(homingBase && homingShoulder && homingWrist && homingElbow){
-//        homingWrist = 0;  
-//        homingElbow = 0;  
-//        homingShoulder = 0;             
-//        homingBase = 0;  
-//        
-//        //---------------------------------
-//        // --------- Init servos ----------
-//        //---------------------------------
-//
-//        servoPos = 10;
-//        servoPos2 = 90;
-//       
-//        for(int i=0 ; i<servoPos; i++){
-//          myservo.write(i);
-//          delay(5);                                    
-//        }                
-//  
-//        for(int i=0 ; i<servoPos2;  i++){
-//          myservo2.write(i);
-//          delay(5);                                    
-//        }        
-//
-//        homingDone = 1;
-//      }
 }
 
 
