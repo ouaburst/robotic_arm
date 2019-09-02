@@ -305,21 +305,32 @@ void initMotors(){
           stepper.setCurrentPosition(0);          
           stepper.setMaxSpeed(5000);
           stepper.setAcceleration(5000);
-          stepper.moveTo(endPositionBase);                               
+          pos = 0;                             
 
           Serial.println("Move back "); 
-          
-//          while (stepper.distanceToGo()!=0) {
-//            stepper.runSpeedToPosition();
+
+          while(pos <= endPositionBase){
+            pos = pos+10;
+            stepper.moveTo(pos);
+
+            while (stepper.distanceToGo()!=0) {
+              stepper.runSpeedToPosition();
+            }
+          }
+
+//          while (digitalRead(home_switch)) { 
+//            stepperX.moveTo(initial_homing); 
+//            initial_homing--;  
+//            stepperX.run();  
+//            delay(5);
 //          }
 
-          while (digitalRead(home_switch)) { 
-            stepperX.moveTo(initial_homing); 
-            initial_homing--;  
-            stepperX.run();  
-            delay(5);
-          }
-          
+//stepper.runToNewPosition(500);
+  
+//  stepper.moveTo(-500);
+//  while (stepper.currentPosition() != 0) // Full speed basck to 0
+//    stepper.run();
+              
           Serial.println("Finished..."); 
           
           stepper.setCurrentPosition(0); 
