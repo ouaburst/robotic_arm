@@ -1,3 +1,5 @@
+
+
 #include <PS2X_lib.h>  //for v1.6
 #include <Servo.h>
 #include <AccelStepper.h>
@@ -200,7 +202,7 @@ void setup(){
   stopShoulderPos2 = 0;
 
   // --------------------------
-  endPositionBase = 700;
+  endPositionBase = 1200;
 
   // --------------------------
   
@@ -278,18 +280,6 @@ void initMotors(){
 
     // --------- Homing ----------
 
-//     if(!homingBase){
-//    
-//        while (digitalRead(baseSwich1)) {  
-//          stepper.moveTo(endPositionBase);  
-//          initial_homing--;  
-//          stepper.run();            
-//        }
-//    
-//     }
-//
-
-
     if(!homingBase){
 
         pos = pos-10;
@@ -310,27 +300,14 @@ void initMotors(){
           Serial.println("Move back "); 
 
           while(pos <= endPositionBase){
-            pos = pos+10;
+            pos = pos+20;
             stepper.moveTo(pos);
 
             while (stepper.distanceToGo()!=0) {
               stepper.runSpeedToPosition();
             }
           }
-
-//          while (digitalRead(home_switch)) { 
-//            stepperX.moveTo(initial_homing); 
-//            initial_homing--;  
-//            stepperX.run();  
-//            delay(5);
-//          }
-
-//stepper.runToNewPosition(500);
-  
-//  stepper.moveTo(-500);
-//  while (stepper.currentPosition() != 0) // Full speed basck to 0
-//    stepper.run();
-              
+   
           Serial.println("Finished..."); 
           
           stepper.setCurrentPosition(0); 
