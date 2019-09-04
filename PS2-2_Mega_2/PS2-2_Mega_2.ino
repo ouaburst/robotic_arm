@@ -1,5 +1,3 @@
-
-
 #include <PS2X_lib.h>  //for v1.6
 #include <Servo.h>
 #include <AccelStepper.h>
@@ -36,16 +34,16 @@ int error = 0;
 byte type = 0;
 byte vibrate = 0;
 
-AccelStepper stepper(AccelStepper::DRIVER, 7, 6);
+AccelStepper stepper1(AccelStepper::DRIVER, 7, 6);    // Base
+AccelStepper stepper4(AccelStepper::DRIVER, 3, 2);    // Wrist
 
 int basePos;
+int wristPos;
 
-// ----------------------------
+// ------ servos --------
 
 # define SERVO_PIN 44
 # define SERVO_PIN2 45
-
-// ------ servos --------
 
 Servo myservo;
 Servo myservo2;
@@ -84,7 +82,6 @@ char *token;
 #define baseSwich2 43   // switch2
 
 // --- Limit positions ---
-
 int stopBasePos1;
 int stopBasePos2;
 int stopWristPos1;
@@ -104,6 +101,7 @@ int homingWrist;
 int homingElbow;
 
 int endPositionBase;
+int endPositionWrist;
 
 int pos;
 
@@ -161,9 +159,11 @@ void setup(){
 
   Serial.begin(19200);
 
-  stepper.setMaxSpeed(5000);
-  stepper.setAcceleration(5000);
+  stepper1.setMaxSpeed(5000);         // Base
+  stepper1.setAcceleration(5000);
 
+  stepper4.setMaxSpeed(5000);         // Wrist
+  stepper4.setAcceleration(5000);
   // ------ servo motor -------
   pinMode(SERVO_PIN, OUTPUT);
   pinMode(SERVO_PIN2, OUTPUT);
@@ -172,7 +172,7 @@ void setup(){
 
   // ------ Step motors positions ------
   basePos = 0;
-
+  wristPos = 0;
   // ------ Switch pins ---------
   pinMode(shoulderSwich1, INPUT_PULLUP); 
   pinMode(shoulderSwich2, INPUT_PULLUP); 
@@ -203,7 +203,7 @@ void setup(){
 
   // --------------------------
   endPositionBase = 1200;
-
+  endPositionWrist = 100;
   // --------------------------
   
   homingBase = 0;
@@ -242,6 +242,25 @@ void loop() {
     noTone(buzzer); 
   }  
 
+  // -----------------------------------
+  // ----------- Wrist limits -----------
+  // -----------------------------------
+  
+  if(!digitalRead(wristSwich1)){
+    stopWristPos1 = 1;   
+    tone(buzzer, 1950); 
+  }else{
+    stopWristPos1 = 0;
+    noTone(buzzer); 
+  }
+
+  if(!digitalRead(wristSwich2)){
+    stopWristPos2 = 1;
+    tone(buzzer, 1950); 
+  }else{
+    stopWristPos2 = 0;
+    noTone(buzzer); 
+  }  
 
   //-----------------------------------------------------------
   // ------ Move stepper motor#1 Base with PS2 joystick -------
@@ -261,12 +280,36 @@ void loop() {
       }      
     }
 
-    stepper.moveTo(basePos);
+    stepper1.moveTo(basePos);
 
-    while (stepper.distanceToGo() !=0) {
-      stepper.runSpeedToPosition();
+    while (stepper1.distanceToGo() !=0) {
+      stepper1.runSpeedToPosition();
     }
       
+  //-----------------------------------------------------------
+  // ------ Move stepper motor#4 Wrist with PS2 joystick -------
+  //-----------------------------------------------------------
+  
+    if(!stopWristPos2){
+      if((ps2x.Analog(PSS_RX) == 255)){                      
+          basePos = basePos+10;          
+          Serial.println(basePos, DEC);                  
+      }                      
+    }
+
+    if(!stopWristPos1){
+      if((ps2x.Analog(PSS_RX) == 0)){
+          basePos = basePos-10;          
+          Serial.println(basePos, DEC);                  
+      }      
+    }
+
+    stepper1.moveTo(basePos);
+
+    while (stepper1.distanceToGo() !=0) {
+      stepper1.runSpeedToPosition();
+    }
+
     //==========================================================     
 
     ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
@@ -283,34 +326,30 @@ void initMotors(){
     if(!homingBase){
 
         pos = pos-10;
-        stepper.moveTo(pos);
+        stepper1.moveTo(pos);
     
-        while (stepper.distanceToGo() !=0) {
-          stepper.runSpeedToPosition();
+        while (stepper1.distanceToGo() !=0) {
+          stepper1.runSpeedToPosition();
         }
 
         Serial.println("Move to switch "); 
         
         if(!digitalRead(baseSwich1)){   
-          stepper.setCurrentPosition(0);          
-          stepper.setMaxSpeed(5000);
-          stepper.setAcceleration(5000);
+          stepper1.setCurrentPosition(0);          
+          stepper1.setMaxSpeed(5000);
+          stepper1.setAcceleration(5000);
           pos = 0;                             
-
-          Serial.println("Move back "); 
 
           while(pos <= endPositionBase){
             pos = pos+20;
-            stepper.moveTo(pos);
+            stepper1.moveTo(pos);
 
-            while (stepper.distanceToGo()!=0) {
-              stepper.runSpeedToPosition();
+            while (stepper1.distanceToGo()!=0) {
+              stepper1.runSpeedToPosition();
             }
           }
    
-          Serial.println("Finished..."); 
-          
-          stepper.setCurrentPosition(0); 
+          stepper1.setCurrentPosition(0); 
           homingBase = 1;
           homingDone = 1; 
         }
