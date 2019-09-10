@@ -35,10 +35,12 @@ byte type = 0;
 byte vibrate = 0;
 
 AccelStepper stepper1(AccelStepper::DRIVER, 7, 6);    // Base
-AccelStepper stepper4(AccelStepper::DRIVER, 3, 2);    // Wrist
+AccelStepper stepper3(AccelStepper::DRIVER, 5, 4);    // Shoulder
+AccelStepper stepper4(AccelStepper::DRIVER, 3, 2);    // Elbow
 
 int basePos;
 int wristPos;
+int elbowPos;
 
 // ------ servos --------
 
@@ -88,8 +90,8 @@ int stopWristPos1;
 int stopWristPos2;
 int stopElbowPos1;
 int stopElbowPos2;
-int stopShoulderPos1;
-int stopShoulderPos2;
+int stopelbowPos1;
+int stopelbowPos2;
 
 // --- Misc ---
 int buzzer; 
@@ -161,9 +163,11 @@ void setup(){
 
   stepper1.setMaxSpeed(5000);         // Base
   stepper1.setAcceleration(5000);
-
   stepper4.setMaxSpeed(5000);         // Wrist
   stepper4.setAcceleration(5000);
+  stepper3.setMaxSpeed(5000);         // Elbow
+  stepper3.setAcceleration(5000);
+  
   // ------ servo motor -------
   pinMode(SERVO_PIN, OUTPUT);
   pinMode(SERVO_PIN2, OUTPUT);
@@ -173,6 +177,8 @@ void setup(){
   // ------ Step motors positions ------
   basePos = 0;
   wristPos = 0;
+  elbowPos = 0;
+  
   // ------ Switch pins ---------
   pinMode(shoulderSwich1, INPUT_PULLUP); 
   pinMode(shoulderSwich2, INPUT_PULLUP); 
@@ -198,14 +204,13 @@ void setup(){
   stopWristPos2 = 0;
   stopElbowPos1 = 0;
   stopElbowPos2 = 0;
-  stopShoulderPos1 = 0;
-  stopShoulderPos2 = 0;
+  stopelbowPos1 = 0;
+  stopelbowPos2 = 0;
 
-  // --------------------------
+  // ---------- For homing ----------------
   endPositionBase = 1200;
   endPositionWrist = 100;
-  // --------------------------
-  
+
   homingBase = 0;
   homingShoulder = 0;
   homingWrist = 0;
@@ -215,6 +220,8 @@ void setup(){
   while(!homingDone){
     initMotors();
   }
+
+  // --------------------------------------
 }
 
 void loop() {
@@ -243,7 +250,7 @@ void loop() {
   }  
 
   // -----------------------------------
-  // ----------- Wrist limits -----------
+  // ----------- Wrist limits ----------
   // -----------------------------------
   
   if(!digitalRead(wristSwich1)){
@@ -259,6 +266,26 @@ void loop() {
     tone(buzzer, 1950); 
   }else{
     stopWristPos2 = 0;
+    noTone(buzzer); 
+  }  
+
+  // --------------------------------------
+  // ----------- Elbow limits ----------
+  // --------------------------------------
+  
+  if(!digitalRead(elbowSwich1)){
+    stopelbowPos1 = 1;   
+    tone(buzzer, 1950); 
+  }else{
+    stopelbowPos1 = 0;
+    noTone(buzzer); 
+  }
+
+  if(!digitalRead(elbowSwich2)){
+    stopelbowPos2 = 1;
+    tone(buzzer, 1950); 
+  }else{
+    stopelbowPos2 = 0;
     noTone(buzzer); 
   }  
 
@@ -286,35 +313,58 @@ void loop() {
       stepper1.runSpeedToPosition();
     }
       
-  //-----------------------------------------------------------
+  //------------------------------------------------------------
   // ------ Move stepper motor#4 Wrist with PS2 joystick -------
-  //-----------------------------------------------------------
+  //------------------------------------------------------------
   
     if(!stopWristPos2){
-      if((ps2x.Analog(PSS_RX) == 255)){                      
-          basePos = basePos+10;          
-          Serial.println(basePos, DEC);                  
+      if((ps2x.Analog(PSS_LY) == 255)){                      
+          wristPos = wristPos+10;          
+          Serial.println(wristPos, DEC);                  
       }                      
     }
 
     if(!stopWristPos1){
-      if((ps2x.Analog(PSS_RX) == 0)){
-          basePos = basePos-10;          
-          Serial.println(basePos, DEC);                  
+      if((ps2x.Analog(PSS_LY) == 0)){
+          wristPos = wristPos-10;          
+          Serial.println(wristPos, DEC);                  
       }      
     }
+    
+    stepper4.moveTo(wristPos);
 
-    stepper1.moveTo(basePos);
+    while (stepper4.distanceToGo() !=0) {
+      stepper4.runSpeedToPosition();
+    }
 
-    while (stepper1.distanceToGo() !=0) {
-      stepper1.runSpeedToPosition();
+  //---------------------------------------------------------------
+  // ------ Move stepper motor#3 Shoulder with PS2 joystick -------
+  //---------------------------------------------------------------
+  
+    if(!stopelbowPos2){
+      if((ps2x.Analog(PSS_RY) == 255)){                      
+          elbowPos = elbowPos-10;          
+          Serial.println(elbowPos, DEC);                  
+      }                      
+    }
+
+    if(!stopelbowPos1){
+      if((ps2x.Analog(PSS_RY) == 0)){
+          elbowPos = elbowPos+10;          
+          Serial.println(elbowPos, DEC);                  
+      }      
+    }
+    
+    stepper3.moveTo(elbowPos);
+
+    while (stepper3.distanceToGo() !=0) {
+      stepper3.runSpeedToPosition();
     }
 
     //==========================================================     
 
     ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
-    
-  
+     
 }
 
 // ---------------------------------
