@@ -35,8 +35,9 @@ byte type = 0;
 byte vibrate = 0;
 
 AccelStepper stepper1(AccelStepper::DRIVER, 7, 6);    // Base
-AccelStepper stepper3(AccelStepper::DRIVER, 5, 4);    // Shoulder
 AccelStepper stepper4(AccelStepper::DRIVER, 3, 2);    // Elbow
+AccelStepper stepper3(AccelStepper::DRIVER, 5, 4);    // Shoulder
+
 
 int basePos;
 int wristPos;
@@ -90,8 +91,8 @@ int stopWristPos1;
 int stopWristPos2;
 int stopElbowPos1;
 int stopElbowPos2;
-int stopelbowPos1;
-int stopelbowPos2;
+int stopShoulderPos1;
+int stopShoulderPos2;
 
 // --- Misc ---
 int buzzer; 
@@ -204,8 +205,8 @@ void setup(){
   stopWristPos2 = 0;
   stopElbowPos1 = 0;
   stopElbowPos2 = 0;
-  stopelbowPos1 = 0;
-  stopelbowPos2 = 0;
+  stopShoulderPos1 = 0;
+  stopShoulderPos2 = 0;
 
   // ---------- For homing ----------------
   endPositionBase = 1200;
@@ -274,18 +275,18 @@ void loop() {
   // --------------------------------------
   
   if(!digitalRead(elbowSwich1)){
-    stopelbowPos1 = 1;   
+    stopElbowPos1 = 1;   
     tone(buzzer, 1950); 
   }else{
-    stopelbowPos1 = 0;
+    stopElbowPos1 = 0;
     noTone(buzzer); 
   }
 
   if(!digitalRead(elbowSwich2)){
-    stopelbowPos2 = 1;
+    stopElbowPos2 = 1;
     tone(buzzer, 1950); 
   }else{
-    stopelbowPos2 = 0;
+    stopElbowPos2 = 0;
     noTone(buzzer); 
   }  
 
@@ -338,18 +339,18 @@ void loop() {
     }
 
   //---------------------------------------------------------------
-  // ------ Move stepper motor#3 Shoulder with PS2 joystick -------
+  // ------ Move stepper motor#3 Elbow with PS2 joystick -------
   //---------------------------------------------------------------
   
-    if(!stopelbowPos2){
-      if((ps2x.Analog(PSS_RY) == 255)){                      
+    if(!stopShoulderPos2){
+      if((ps2x.Analog(PSS_LX) == 255)){                      
           elbowPos = elbowPos-10;          
           Serial.println(elbowPos, DEC);                  
       }                      
     }
 
-    if(!stopelbowPos1){
-      if((ps2x.Analog(PSS_RY) == 0)){
+    if(!stopShoulderPos1){
+      if((ps2x.Analog(PSS_LX) == 0)){
           elbowPos = elbowPos+10;          
           Serial.println(elbowPos, DEC);                  
       }      
