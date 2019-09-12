@@ -35,14 +35,15 @@ byte type = 0;
 byte vibrate = 0;
 
 AccelStepper stepper1(AccelStepper::DRIVER, 7, 6);    // Base
-AccelStepper stepper4(AccelStepper::DRIVER, 3, 2);    // Elbow
-AccelStepper stepper3(AccelStepper::DRIVER, 5, 4);    // Wrist
-AccelStepper stepper2(AccelStepper::DRIVER, 9, 8);    // Wrist
+AccelStepper stepper2(AccelStepper::DRIVER, 9, 8);    // Shoulder
+AccelStepper stepper3(AccelStepper::DRIVER, 5, 4);    // Elbow
+AccelStepper stepper4(AccelStepper::DRIVER, 3, 2);    // Wrist
 
 int basePos;
 int wristPos;
 int elbowPos;
 int shoulderPos;
+
 // ------ servos --------
 
 # define SERVO_PIN 44
@@ -127,6 +128,8 @@ int homingElbow;
 
 int endPositionBase;
 int endPositionWrist;
+int endPositionElbow;
+int endPositionShoulder;
 
 int pos;
 int posIndex;
@@ -242,8 +245,10 @@ void setup(){
   stopShoulderPos2 = 0;
 
   // ---------- For homing ----------------
-  endPositionBase = 1200;
-  endPositionWrist = 100;
+  endPositionBase = 200;
+  endPositionWrist = 200;
+  endPositionElbow = 200;
+  endPositionShoulder = 200;
 
   homingBase = 0;
   homingShoulder = 0;
@@ -343,222 +348,222 @@ void loop() {
     noTone(buzzer); 
   }  
 
-    // --------------------------------------------
-    // ------------- Servo1 gripper ---------------
-    // --------------------------------------------
-    
-    if(ps2x.Button(PSB_PAD_RIGHT)){               
-      if(servoPos > MIN_GRIPPER_POS){        
-        if(!gripperServoRotateDir1){
-          posIndex++;
-          motor[posIndex].number = 5;          
-          motor[posIndex].speed = 5;    
-          motor[posIndex].type = SERVO_MOTOR;   
-          motor[posIndex].dir = DIR2;   
-          gripperServoRotateDir1 = 1;
-          gripperServoRotateDir2 = 0;
-          servoSteps = 0;
+  // --------------------------------------------
+  // ------------- Servo1 gripper ---------------
+  // --------------------------------------------
+  
+  if(ps2x.Button(PSB_PAD_RIGHT)){               
+    if(servoPos > MIN_GRIPPER_POS){        
+      if(!gripperServoRotateDir1){
+        posIndex++;
+        motor[posIndex].number = 5;          
+        motor[posIndex].speed = 5;    
+        motor[posIndex].type = SERVO_MOTOR;   
+        motor[posIndex].dir = DIR2;   
+        gripperServoRotateDir1 = 1;
+        gripperServoRotateDir2 = 0;
+        servoSteps = 0;
 //          Serial.println("");           
 //          Serial.println("S1");               
-        }        
-        servoPos -= 1;
-        servoSteps++;
-        motor[posIndex].steps = servoSteps;     
+      }        
+      servoPos -= 1;
+      servoSteps++;
+      motor[posIndex].steps = servoSteps;     
 
 //        Serial.print(":");        
 //        Serial.print(servoSteps, DEC);
-                  
-        myservo.write(servoPos);
-        delay(5);  
-      }
+                
+      myservo.write(servoPos);
+      delay(5);  
     }
-    if(ps2x.Button(PSB_PAD_LEFT)){     
-      if(servoPos < MAX_GRIPPER_POS){
+  }
+  if(ps2x.Button(PSB_PAD_LEFT)){     
+    if(servoPos < MAX_GRIPPER_POS){
 
-        if(!gripperServoRotateDir2){
-          posIndex++;
-          motor[posIndex].number = 5;          
-          motor[posIndex].speed = 5;    
-          motor[posIndex].type = SERVO_MOTOR; 
-          motor[posIndex].dir = DIR1;               
-          gripperServoRotateDir2 = 1;
-          gripperServoRotateDir1 = 0;
-          servoSteps = 0;
-          
+      if(!gripperServoRotateDir2){
+        posIndex++;
+        motor[posIndex].number = 5;          
+        motor[posIndex].speed = 5;    
+        motor[posIndex].type = SERVO_MOTOR; 
+        motor[posIndex].dir = DIR1;               
+        gripperServoRotateDir2 = 1;
+        gripperServoRotateDir1 = 0;
+        servoSteps = 0;
+        
 //          Serial.println("");           
 //          Serial.println("S1");               
-        }
-        servoPos += 1;
-        servoSteps++;
-        motor[posIndex].steps = servoSteps;     
+      }
+      servoPos += 1;
+      servoSteps++;
+      motor[posIndex].steps = servoSteps;     
 
 //        Serial.print(":");        
 //        Serial.print(servoSteps, DEC);
-                     
-        myservo.write(servoPos);
-        delay(5); 
-      }
+                   
+      myservo.write(servoPos);
+      delay(5); 
     }
+  }
 
-    // ---------------------------------------------------
-    // ------------- Servo2 wrist rotation ---------------
-    // ---------------------------------------------------
-    
-    if(ps2x.Button(PSB_PAD_UP)) {      
-      if(servoPos2 > MIN_WRSIT_POS){
+  // ---------------------------------------------------
+  // ------------- Servo2 wrist rotation ---------------
+  // ---------------------------------------------------
+  
+  if(ps2x.Button(PSB_PAD_UP)) {      
+    if(servoPos2 > MIN_WRSIT_POS){
 
-        if(!wristServoRotateDir1){
-          posIndex++;
-          motor[posIndex].number = 6;          
-          motor[posIndex].speed = 5;    
-          motor[posIndex].type = SERVO_MOTOR;  
-          motor[posIndex].dir = DIR2;              
-          wristServoRotateDir1 = 1;
-          wristServoRotateDir2 = 0;
-          servoSteps = 0;
-          
-          Serial.print("--> Posindex: ");           
-          Serial.println(posIndex, DEC);           
-        }        
-        servoPos2 -= 1;
-        servoSteps++;
-        motor[posIndex].steps = servoSteps;     
+      if(!wristServoRotateDir1){
+        posIndex++;
+        motor[posIndex].number = 6;          
+        motor[posIndex].speed = 5;    
+        motor[posIndex].type = SERVO_MOTOR;  
+        motor[posIndex].dir = DIR2;              
+        wristServoRotateDir1 = 1;
+        wristServoRotateDir2 = 0;
+        servoSteps = 0;
+        
+        Serial.print("--> Posindex: ");           
+        Serial.println(posIndex, DEC);           
+      }        
+      servoPos2 -= 1;
+      servoSteps++;
+      motor[posIndex].steps = servoSteps;     
 
 //        Serial.print(":");        
 //        Serial.print(servoSteps, DEC);
-                     
-        myservo2.write(servoPos2);
-        delay(5);  
-      }
+                   
+      myservo2.write(servoPos2);
+      delay(5);  
     }
-    
-    if(ps2x.Button(PSB_PAD_DOWN)){
-      if(servoPos2 < MAX_WRIST_POS){
+  }
+  
+  if(ps2x.Button(PSB_PAD_DOWN)){
+    if(servoPos2 < MAX_WRIST_POS){
 
-        if(!wristServoRotateDir2){
-          posIndex++;
-          motor[posIndex].number = 6;          
-          motor[posIndex].speed = 5;    
-          motor[posIndex].type = SERVO_MOTOR;   
-          motor[posIndex].dir = DIR1;             
-          wristServoRotateDir2 = 1;
-          wristServoRotateDir1 = 0;
-          servoSteps = 0;
-          
-          Serial.print("--> Posindex: ");           
-          Serial.println(posIndex, DEC);           
-        }        
-        servoPos2 += 1;
-        servoSteps++;
-        motor[posIndex].steps = servoSteps;   
+      if(!wristServoRotateDir2){
+        posIndex++;
+        motor[posIndex].number = 6;          
+        motor[posIndex].speed = 5;    
+        motor[posIndex].type = SERVO_MOTOR;   
+        motor[posIndex].dir = DIR1;             
+        wristServoRotateDir2 = 1;
+        wristServoRotateDir1 = 0;
+        servoSteps = 0;
+        
+        Serial.print("--> Posindex: ");           
+        Serial.println(posIndex, DEC);           
+      }        
+      servoPos2 += 1;
+      servoSteps++;
+      motor[posIndex].steps = servoSteps;   
 
 //        Serial.print(":");        
 //        Serial.print(servoSteps, DEC);
-                               
-        myservo2.write(servoPos2);
-        delay(5); 
-      }
-    }   
-    
+                             
+      myservo2.write(servoPos2);
+      delay(5); 
+    }
+  }   
+  
   //-----------------------------------------------------------
   // ------ Move stepper motor#1 Base with PS2 joystick -------
   //-----------------------------------------------------------
   
-    if(!stopBasePos2){
-      if((ps2x.Analog(PSS_RX) == 255)){                      
-          basePos = basePos+10;          
-          Serial.println(basePos, DEC);                  
-      }                      
-    }
+  if(!stopBasePos2){
+    if((ps2x.Analog(PSS_RX) == 255)){                      
+        basePos = basePos+10;          
+        Serial.println(basePos, DEC);                  
+    }                      
+  }
 
-    if(!stopBasePos1){
-      if((ps2x.Analog(PSS_RX) == 0)){
-          basePos = basePos-10;          
-          Serial.println(basePos, DEC);                  
-      }      
-    }
+  if(!stopBasePos1){
+    if((ps2x.Analog(PSS_RX) == 0)){
+        basePos = basePos-10;          
+        Serial.println(basePos, DEC);                  
+    }      
+  }
 
-    stepper1.moveTo(basePos);
+  stepper1.moveTo(basePos);
 
-    while (stepper1.distanceToGo() !=0) {
-      stepper1.runSpeedToPosition();
-    }
+  while (stepper1.distanceToGo() !=0) {
+    stepper1.runSpeedToPosition();
+  }
       
   //------------------------------------------------------------
   // ------ Move stepper motor#4 Wrist with PS2 joystick -------
   //------------------------------------------------------------
   
-    if(!stopWristPos2){
-      if((ps2x.Analog(PSS_LY) == 255)){                      
-          wristPos = wristPos+10;          
-          Serial.println(wristPos, DEC);                  
-      }                      
-    }
+  if(!stopWristPos2){
+    if((ps2x.Analog(PSS_LY) == 255)){                      
+        wristPos = wristPos+10;          
+        Serial.println(wristPos, DEC);                  
+    }                      
+  }
 
-    if(!stopWristPos1){
-      if((ps2x.Analog(PSS_LY) == 0)){
-          wristPos = wristPos-10;          
-          Serial.println(wristPos, DEC);                  
-      }      
-    }
-    
-    stepper4.moveTo(wristPos);
+  if(!stopWristPos1){
+    if((ps2x.Analog(PSS_LY) == 0)){
+        wristPos = wristPos-10;          
+        Serial.println(wristPos, DEC);                  
+    }      
+  }
+  
+  stepper4.moveTo(wristPos);
 
-    while (stepper4.distanceToGo() !=0) {
-      stepper4.runSpeedToPosition();
-    }
+  while (stepper4.distanceToGo() !=0) {
+    stepper4.runSpeedToPosition();
+  }
 
   //------------------------------------------------------------
   // ------ Move stepper motor#3 Elbow with PS2 joystick -------
   //------------------------------------------------------------
   
-    if(!stopElbowPos2){
-      if((ps2x.Analog(PSS_LX) == 255)){                      
-          elbowPos = elbowPos-10;          
-          Serial.println(elbowPos, DEC);                  
-      }                      
-    }
+  if(!stopElbowPos2){
+    if((ps2x.Analog(PSS_LX) == 255)){                      
+        elbowPos = elbowPos-10;          
+        Serial.println(elbowPos, DEC);                  
+    }                      
+  }
 
-    if(!stopElbowPos1){
-      if((ps2x.Analog(PSS_LX) == 0)){
-          elbowPos = elbowPos+10;          
-          Serial.println(elbowPos, DEC);                  
-      }      
-    }
-        
-    stepper3.moveTo(elbowPos);
+  if(!stopElbowPos1){
+    if((ps2x.Analog(PSS_LX) == 0)){
+        elbowPos = elbowPos+10;          
+        Serial.println(elbowPos, DEC);                  
+    }      
+  }
+      
+  stepper3.moveTo(elbowPos);
 
-    while (stepper3.distanceToGo() !=0) {
-      stepper3.runSpeedToPosition();
-    }
+  while (stepper3.distanceToGo() !=0) {
+    stepper3.runSpeedToPosition();
+  }
 
   //---------------------------------------------------------------
   // ------ Move stepper motor#2 Shoulder with PS2 joystick -------
   //---------------------------------------------------------------
   
-    if(!stopShoulderPos2){
-      if((ps2x.Analog(PSS_RY) == 255)){                      
-          shoulderPos = shoulderPos-10;          
-          Serial.println(shoulderPos, DEC);                  
-      }                      
-    }
+  if(!stopShoulderPos2){
+    if((ps2x.Analog(PSS_RY) == 255)){                      
+        shoulderPos = shoulderPos-10;          
+        Serial.println(shoulderPos, DEC);                  
+    }                      
+  }
 
-    if(!stopShoulderPos1){
-      if((ps2x.Analog(PSS_RY) == 0)){
-          shoulderPos = shoulderPos+10;          
-          Serial.println(shoulderPos, DEC);                  
-      }      
-    }
-        
-    stepper2.moveTo(shoulderPos);
+  if(!stopShoulderPos1){
+    if((ps2x.Analog(PSS_RY) == 0)){
+        shoulderPos = shoulderPos+10;          
+        Serial.println(shoulderPos, DEC);                  
+    }      
+  }
+      
+  stepper2.moveTo(shoulderPos);
 
-    while (stepper2.distanceToGo() !=0) {
-      stepper2.runSpeedToPosition();
-    }
+  while (stepper2.distanceToGo() !=0) {
+    stepper2.runSpeedToPosition();
+  }
 
-    //==========================================================     
+  //-----------------------------------------------------   
 
-    ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
+  ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
      
 }
 
@@ -566,41 +571,163 @@ void loop() {
 
 void initMotors(){
 
-    // --------- Homing ----------
+  // --------- Homing Base ----------
 
-    if(!homingBase){
-
-        pos = pos-10;
-        stepper1.moveTo(pos);
+  if(!homingBase){
     
-        while (stepper1.distanceToGo() !=0) {
-          stepper1.runSpeedToPosition();
-        }
+    pos = pos-20;
+    stepper1.moveTo(pos);
 
-        Serial.println("Move to switch "); 
-        
-        if(!digitalRead(baseSwich1)){   
-          stepper1.setCurrentPosition(0);          
-          stepper1.setMaxSpeed(5000);
-          stepper1.setAcceleration(5000);
-          pos = 0;                             
-
-          while(pos <= endPositionBase){
-            pos = pos+20;
-            stepper1.moveTo(pos);
-
-            while (stepper1.distanceToGo()!=0) {
-              stepper1.runSpeedToPosition();
-            }
-          }
-   
-          stepper1.setCurrentPosition(0); 
-          homingBase = 1;
-          homingDone = 1; 
-        }
-
+    while(stepper1.distanceToGo() !=0){
+      stepper1.runSpeedToPosition();
     }
 
+    //Serial.println("Move to switch "); 
+    
+    if(!digitalRead(baseSwich1)){   
+      stepper1.setCurrentPosition(0);          
+      stepper1.setMaxSpeed(5000);
+      stepper1.setAcceleration(5000);
+      pos = 0;                             
+
+      while(pos <= endPositionBase){
+        pos = pos+20;
+        stepper1.moveTo(pos);
+
+        while(stepper1.distanceToGo()!=0){
+          stepper1.runSpeedToPosition();
+        }
+      }
+
+      stepper1.setCurrentPosition(0); 
+      homingBase = 1;
+      pos = 0;
+    }
+  }
+
+  // --------- Homing Wrist ----------
+  
+  if(homingBase && !homingWrist){
+    
+    pos = pos-20;
+    stepper4.moveTo(pos);
+
+    while(stepper4.distanceToGo() !=0){
+      stepper4.runSpeedToPosition();
+    }
+
+    //Serial.println("Move to switch "); 
+    
+    if(!digitalRead(wristSwich1)){   
+      stepper4.setCurrentPosition(0);          
+      stepper4.setMaxSpeed(5000);
+      stepper4.setAcceleration(5000);
+      pos = 0;                             
+
+      while(pos <= endPositionWrist){
+        pos = pos+20;
+        stepper4.moveTo(pos);
+
+        while(stepper4.distanceToGo()!=0){
+          stepper4.runSpeedToPosition();
+        }
+      }
+
+      stepper4.setCurrentPosition(0); 
+      homingWrist = 1;
+      pos = 0;      
+    }
+  }
+
+  // --------- Homing Elbow ----------
+  
+  if(homingBase && homingWrist && !homingElbow){
+    
+    pos = pos-20;
+    stepper3.moveTo(pos);
+
+    while(stepper3.distanceToGo() !=0){
+      stepper3.runSpeedToPosition();
+    }
+
+    //Serial.println("Move to switch "); 
+    
+    if(!digitalRead(elbowSwich2)){   
+      stepper3.setCurrentPosition(0);          
+      stepper3.setMaxSpeed(5000);
+      stepper3.setAcceleration(5000);
+      pos = 0;                             
+
+      while(pos <= endPositionElbow){
+        pos = pos+20;
+        stepper3.moveTo(pos);
+
+        while(stepper3.distanceToGo()!=0){
+          stepper3.runSpeedToPosition();
+        }
+      }
+
+      stepper3.setCurrentPosition(0); 
+      homingElbow = 1;
+      pos = 0;
+    }
+  }
+
+  // --------- Homing Shoulder ----------
+  
+  if(homingBase && homingWrist && homingElbow && !homingShoulder){
+    
+    pos = pos-20;
+    stepper2.moveTo(pos);
+
+    while(stepper2.distanceToGo() !=0){
+      stepper2.runSpeedToPosition();
+    }
+
+    //Serial.println("Move to switch "); 
+    
+    if(!digitalRead(shoulderSwich2)){   
+      stepper2.setCurrentPosition(0);          
+      stepper2.setMaxSpeed(5000);
+      stepper2.setAcceleration(5000);
+      pos = 0;                             
+
+      while(pos <= endPositionShoulder){
+        pos = pos+20;
+        stepper2.moveTo(pos);
+
+        while(stepper2.distanceToGo()!=0){
+          stepper2.runSpeedToPosition();
+        }
+      }
+
+      stepper2.setCurrentPosition(0); 
+      homingShoulder = 1;
+    }
+  }
+
+  // --------- Homing Servos ----------
+  
+  if(homingBase && homingShoulder && homingWrist && homingElbow){
+    homingWrist = 0;  
+    homingElbow = 0;  
+    homingShoulder = 0;             
+    homingBase = 0;  
+    
+    servoPos = 10;
+    servoPos2 = 90;
+   
+    for(int i=0 ; i<servoPos; i++){
+      myservo.write(i);
+      delay(5);                                    
+    }                
+
+    for(int i=0 ; i<servoPos2;  i++){
+      myservo2.write(i);
+      delay(5);                                    
+    }        
+    homingDone = 1;
+  }
 }
 
 
