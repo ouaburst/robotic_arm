@@ -48,8 +48,30 @@ int shoulderPos;
 # define SERVO_PIN 44
 # define SERVO_PIN2 45
 
+# define MIN_GRIPPER_POS 0
+# define MAX_GRIPPER_POS 145
+# define MIN_WRSIT_POS 0
+# define MAX_WRIST_POS 170
+#define SERVO_MOTOR 2
+#define DIR1 1      // servo pos ++
+#define DIR2 2      // servo pos --
+
 Servo myservo;
 Servo myservo2;
+
+int servoPos;
+int servoPos2;
+int gripperServoRotateDir1;
+int gripperServoRotateDir2;
+int wristServoRotateDir1;
+int wristServoRotateDir2;
+int servoSteps;
+
+// ----------------------
+
+#define HOMING_ACTION 1   
+#define PLAY_ACTION 2   
+#define STEP_MOTOR 1
 
 // --------- Struct -----------
 
@@ -107,6 +129,7 @@ int endPositionBase;
 int endPositionWrist;
 
 int pos;
+int posIndex;
 
 void setup(){  
 
@@ -171,16 +194,24 @@ void setup(){
   stepper2.setMaxSpeed(5000);         // Shoulder
   stepper2.setAcceleration(5000);
   
-  // ------ servo motor -------
+  // ------ servo motors -------
   pinMode(SERVO_PIN, OUTPUT);
   pinMode(SERVO_PIN2, OUTPUT);
   myservo.attach(SERVO_PIN);
   myservo2.attach(SERVO_PIN2);
 
+  servoPos = MAX_GRIPPER_POS;
+  servoPos2 = 90;
+  gripperServoRotateDir1 = 0;
+  gripperServoRotateDir2 = 0;
+  wristServoRotateDir1 = 0;
+  wristServoRotateDir2 = 0;
+
   // ------ Step motors positions ------
   basePos = 0;
   wristPos = 0;
   elbowPos = 0;
+  posIndex = 0;
   
   // ------ Switch pins ---------
   pinMode(shoulderSwich1, INPUT_PULLUP); 
@@ -312,6 +343,123 @@ void loop() {
     noTone(buzzer); 
   }  
 
+    // --------------------------------------------
+    // ------------- Servo1 gripper ---------------
+    // --------------------------------------------
+    
+    if(ps2x.Button(PSB_PAD_RIGHT)){               
+      if(servoPos > MIN_GRIPPER_POS){        
+        if(!gripperServoRotateDir1){
+          posIndex++;
+          motor[posIndex].number = 5;          
+          motor[posIndex].speed = 5;    
+          motor[posIndex].type = SERVO_MOTOR;   
+          motor[posIndex].dir = DIR2;   
+          gripperServoRotateDir1 = 1;
+          gripperServoRotateDir2 = 0;
+          servoSteps = 0;
+//          Serial.println("");           
+//          Serial.println("S1");               
+        }        
+        servoPos -= 1;
+        servoSteps++;
+        motor[posIndex].steps = servoSteps;     
+
+//        Serial.print(":");        
+//        Serial.print(servoSteps, DEC);
+                  
+        myservo.write(servoPos);
+        delay(5);  
+      }
+    }
+    if(ps2x.Button(PSB_PAD_LEFT)){     
+      if(servoPos < MAX_GRIPPER_POS){
+
+        if(!gripperServoRotateDir2){
+          posIndex++;
+          motor[posIndex].number = 5;          
+          motor[posIndex].speed = 5;    
+          motor[posIndex].type = SERVO_MOTOR; 
+          motor[posIndex].dir = DIR1;               
+          gripperServoRotateDir2 = 1;
+          gripperServoRotateDir1 = 0;
+          servoSteps = 0;
+          
+//          Serial.println("");           
+//          Serial.println("S1");               
+        }
+        servoPos += 1;
+        servoSteps++;
+        motor[posIndex].steps = servoSteps;     
+
+//        Serial.print(":");        
+//        Serial.print(servoSteps, DEC);
+                     
+        myservo.write(servoPos);
+        delay(5); 
+      }
+    }
+
+    // ---------------------------------------------------
+    // ------------- Servo2 wrist rotation ---------------
+    // ---------------------------------------------------
+    
+    if(ps2x.Button(PSB_PAD_UP)) {      
+      if(servoPos2 > MIN_WRSIT_POS){
+
+        if(!wristServoRotateDir1){
+          posIndex++;
+          motor[posIndex].number = 6;          
+          motor[posIndex].speed = 5;    
+          motor[posIndex].type = SERVO_MOTOR;  
+          motor[posIndex].dir = DIR2;              
+          wristServoRotateDir1 = 1;
+          wristServoRotateDir2 = 0;
+          servoSteps = 0;
+          
+          Serial.print("--> Posindex: ");           
+          Serial.println(posIndex, DEC);           
+        }        
+        servoPos2 -= 1;
+        servoSteps++;
+        motor[posIndex].steps = servoSteps;     
+
+//        Serial.print(":");        
+//        Serial.print(servoSteps, DEC);
+                     
+        myservo2.write(servoPos2);
+        delay(5);  
+      }
+    }
+    
+    if(ps2x.Button(PSB_PAD_DOWN)){
+      if(servoPos2 < MAX_WRIST_POS){
+
+        if(!wristServoRotateDir2){
+          posIndex++;
+          motor[posIndex].number = 6;          
+          motor[posIndex].speed = 5;    
+          motor[posIndex].type = SERVO_MOTOR;   
+          motor[posIndex].dir = DIR1;             
+          wristServoRotateDir2 = 1;
+          wristServoRotateDir1 = 0;
+          servoSteps = 0;
+          
+          Serial.print("--> Posindex: ");           
+          Serial.println(posIndex, DEC);           
+        }        
+        servoPos2 += 1;
+        servoSteps++;
+        motor[posIndex].steps = servoSteps;   
+
+//        Serial.print(":");        
+//        Serial.print(servoSteps, DEC);
+                               
+        myservo2.write(servoPos2);
+        delay(5); 
+      }
+    }   
+    
   //-----------------------------------------------------------
   // ------ Move stepper motor#1 Base with PS2 joystick -------
   //-----------------------------------------------------------
