@@ -134,6 +134,15 @@ int endPositionShoulder;
 int pos;
 int posIndex;
 
+int shoulderDir1;
+int shoulderDir2;
+int elbowDir1;
+int elbowDir2;
+int wristDir1;
+int wristDir2;
+int baseDir1;
+int baseDir2;
+
 void setup(){  
 
   //------------ PS2 ---------------   
@@ -363,16 +372,10 @@ void loop() {
         gripperServoRotateDir1 = 1;
         gripperServoRotateDir2 = 0;
         servoSteps = 0;
-//          Serial.println("");           
-//          Serial.println("S1");               
       }        
       servoPos -= 1;
       servoSteps++;
-      motor[posIndex].steps = servoSteps;     
-
-//        Serial.print(":");        
-//        Serial.print(servoSteps, DEC);
-                
+      motor[posIndex].steps = servoSteps;                     
       myservo.write(servoPos);
       delay(5);  
     }
@@ -389,17 +392,10 @@ void loop() {
         gripperServoRotateDir2 = 1;
         gripperServoRotateDir1 = 0;
         servoSteps = 0;
-        
-//          Serial.println("");           
-//          Serial.println("S1");               
       }
       servoPos += 1;
       servoSteps++;
       motor[posIndex].steps = servoSteps;     
-
-//        Serial.print(":");        
-//        Serial.print(servoSteps, DEC);
-                   
       myservo.write(servoPos);
       delay(5); 
     }
@@ -421,17 +417,10 @@ void loop() {
         wristServoRotateDir1 = 1;
         wristServoRotateDir2 = 0;
         servoSteps = 0;
-        
-        Serial.print("--> Posindex: ");           
-        Serial.println(posIndex, DEC);           
       }        
       servoPos2 -= 1;
       servoSteps++;
       motor[posIndex].steps = servoSteps;     
-
-//        Serial.print(":");        
-//        Serial.print(servoSteps, DEC);
-                   
       myservo2.write(servoPos2);
       delay(5);  
     }
@@ -449,17 +438,10 @@ void loop() {
         wristServoRotateDir2 = 1;
         wristServoRotateDir1 = 0;
         servoSteps = 0;
-        
-        Serial.print("--> Posindex: ");           
-        Serial.println(posIndex, DEC);           
       }        
       servoPos2 += 1;
       servoSteps++;
       motor[posIndex].steps = servoSteps;   
-
-//        Serial.print(":");        
-//        Serial.print(servoSteps, DEC);
-                             
       myservo2.write(servoPos2);
       delay(5); 
     }
