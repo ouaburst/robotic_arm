@@ -69,7 +69,6 @@ int wristServoRotateDir2;
 int servoSteps;
 
 // ----------------------
-
 #define HOMING_ACTION 1   
 #define PLAY_ACTION 2   
 #define STEP_MOTOR 1
@@ -133,7 +132,6 @@ int endPositionShoulder;
 
 int pos;
 int posIndex;
-
 int shoulderDir1;
 int shoulderDir2;
 int elbowDir1;
@@ -239,11 +237,15 @@ void setup(){
   buzzer = 31; 
   pinMode(buzzer, OUTPUT); 
   noTone(buzzer); 
-
   homingDone = 0;
+ 
+  // ------ Stepper motor speed -------
+  # define STEP_MOTOR_SPEED_BASE 10
+  # define STEP_MOTOR_SPEED_SHOULDER 10
+  # define STEP_MOTOR_SPEED_ELBOW 10
+  # define STEP_MOTOR_SPEED_WRIST 10
 
   // ------ Limit values -------
-
   stopBasePos1 = 0;
   stopBasePos2 = 0;
   stopWristPos1 = 0;
@@ -258,6 +260,16 @@ void setup(){
   endPositionWrist = 200;
   endPositionElbow = 200;
   endPositionShoulder = 200;
+
+  // --------- Stepper directions -----------
+  shoulderDir1 = 0;
+  shoulderDir2 = 0;
+  elbowDir1 = 0;
+  elbowDir2 = 0;
+  wristDir1 = 0;
+  wristDir2 = 0;
+  baseDir1 = 0;
+  baseDir2 = 0;
 
   homingBase = 0;
   homingShoulder = 0;
@@ -380,9 +392,9 @@ void loop() {
       delay(5);  
     }
   }
+  
   if(ps2x.Button(PSB_PAD_LEFT)){     
     if(servoPos < MAX_GRIPPER_POS){
-
       if(!gripperServoRotateDir2){
         posIndex++;
         motor[posIndex].number = 5;          
@@ -452,16 +464,37 @@ void loop() {
   //-----------------------------------------------------------
   
   if(!stopBasePos2){
-    if((ps2x.Analog(PSS_RX) == 255)){                      
-        basePos = basePos+10;          
-        Serial.println(basePos, DEC);                  
+    if((ps2x.Analog(PSS_RX) == 255)){  
+      if(baseDir1==0){
+        baseDir1=1;
+        posIndex++;
+        motor[posIndex].number = 1;          
+        motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
+        motor[posIndex].type = STEP_MOTOR;   
+      }
+      if(baseDir2==1){
+        baseDir2=0;
+      }                          
+      basePos = basePos+STEP_MOTOR_SPEED_BASE;          
+      motor[posIndex].steps = basePos; 
+      Serial.println(basePos, DEC);                  
     }                      
   }
 
   if(!stopBasePos1){
     if((ps2x.Analog(PSS_RX) == 0)){
-        basePos = basePos-10;          
-        Serial.println(basePos, DEC);                  
+      if(baseDir1==0){
+        baseDir2=1;
+        posIndex++;
+        motor[posIndex].number = 1;          
+        motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
+        motor[posIndex].type = STEP_MOTOR;   
+      }
+      if(baseDir1==1){
+        baseDir1=0;
+      }                          
+      basePos = basePos-STEP_MOTOR_SPEED_BASE;          
+      Serial.println(basePos, DEC);                  
     }      
   }
 
