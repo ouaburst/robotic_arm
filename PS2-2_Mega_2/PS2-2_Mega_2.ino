@@ -141,6 +141,9 @@ int wristDir2;
 int baseDir1;
 int baseDir2;
 
+int stepperSteps;
+int DisplayData;
+
 void setup(){  
 
   //------------ PS2 ---------------   
@@ -277,6 +280,9 @@ void setup(){
   homingElbow = 0;
   pos = 0;
 
+  stepperSteps = 0;
+  DisplayData = 0;
+  
   while(!homingDone){
     initMotors();
   }
@@ -288,7 +294,7 @@ void loop() {
  
   if(error == 1) //skip loop if no controller found
     return; 
-
+    
   // -----------------------------------
   // ----------- Base limits -----------
   // -----------------------------------
@@ -471,6 +477,10 @@ void loop() {
         motor[posIndex].number = 1;          
         motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
         motor[posIndex].type = STEP_MOTOR;   
+        stepperSteps = 0;
+
+        Serial.print("--> Posindex: ");           
+        Serial.println(posIndex, DEC);                   
       }
       if(baseDir2==1){
         baseDir2=0;
@@ -483,17 +493,22 @@ void loop() {
 
   if(!stopBasePos1){
     if((ps2x.Analog(PSS_RX) == 0)){
-      if(baseDir1==0){
+      if(baseDir2==0){
         baseDir2=1;
         posIndex++;
         motor[posIndex].number = 1;          
         motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
-        motor[posIndex].type = STEP_MOTOR;   
+        motor[posIndex].type = STEP_MOTOR;  
+
+        Serial.print("--> Posindex: ");           
+        Serial.println(posIndex, DEC);           
+         
       }
       if(baseDir1==1){
         baseDir1=0;
       }                          
-      basePos = basePos-STEP_MOTOR_SPEED_BASE;          
+      basePos = basePos-STEP_MOTOR_SPEED_BASE;  
+      motor[posIndex].steps = basePos;               
       Serial.println(basePos, DEC);                  
     }      
   }
@@ -576,13 +591,42 @@ void loop() {
     stepper2.runSpeedToPosition();
   }
 
-  //-----------------------------------------------------   
+  // -----------------------------------------------
+  // ------ Press button for playing sample --------
+  // -----------------------------------------------
+      
+    if(ps2x.ButtonPressed(PSB_CIRCLE)){
+      DisplayData = 1;
+    }       
+
+  
+  if(DisplayData){
+
+     Serial.println("++++++++++++ Display Data ++++++++++++++++");
+
+    for(int i=1; i<posIndex+1 ; i++){
+
+      Serial.println(motor[i].number,DEC);
+      Serial.println(motor[i].speed,DEC);
+      Serial.println(motor[i].type,DEC);
+      Serial.println(motor[i].steps,DEC);
+      Serial.println(motor[i].dir,DEC);
+      Serial.println("-------------------");
+    }
+
+    DisplayData = 0;
+  }
+
+
+//----------------------------------------   
 
   ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
-     
+   
 }
 
-// ---------------------------------
+// -------------------------
+// ------ initMotors -------
+// -------------------------
 
 void initMotors(){
 
