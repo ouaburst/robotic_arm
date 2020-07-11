@@ -1,0 +1,12 @@
+﻿  main.c
+C:\C-code\IK_2\main.c(77,30): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\C-code\IK_2\main.c(79,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\C-code\IK_2\main.c(80,23): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\C-code\IK_2\main.c(81,52): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\C-code\IK_2\main.c(88,27): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\C-code\IK_2\main.c(90,69): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\C-code\IK_2\main.c(91,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\C-code\IK_2\main.c(63,14): warning C4101: 'B': unreferenced local variable
+C:\C-code\IK_2\main.c(63,11): warning C4101: 'A': unreferenced local variable
+C:\C-code\IK_2\main.c(63,17): warning C4101: 'C': unreferenced local variable
+  IK_2.vcxproj -> C:\C-code\IK_2\Debug\IK_2.exe

@@ -1,0 +1,2 @@
+C:\C-code\IK_2\Debug\IK_2.exe
+C:\C-code\IK_2\Debug\IK_2.pdb
