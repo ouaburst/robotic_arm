@@ -8,7 +8,7 @@ N = 17
 
 x = 29.84
 y = 0
-z = 3.9
+z = 3.9 
 
 
 R = math.sqrt(pow(x,2) + pow(y,2))
