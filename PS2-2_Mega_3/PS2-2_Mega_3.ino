@@ -158,7 +158,7 @@ int endPositionWrist;
 int endPositionElbow;
 int endPositionShoulder;
 
-int pos;
+long pos;
 int posIndex;
 int shoulderDir1;
 int shoulderDir2;
@@ -305,7 +305,9 @@ void setup(){
   stepperSteps = 0;
   DisplayData = 0;
 
-  //homingDone = 1;
+  // -------- Homing -------  
+  
+  homingDone = 1;
   
   while(!homingDone){
     initMotors();
@@ -313,45 +315,67 @@ void setup(){
 
   // --------------------------------------
 
-//  dx = 25.05;
-//  dy = 10.0;
-//  dz = 10;
-//
-//  // d = angle base
-//  // a = angle shoulder
-//  // b = angle elbow
-//  // c = angle wrist
-//
-//  inverseKinematics(dx,dy,dz);
-//
-//  // Initialize angles @90 degrees = postion 0
-//  d = round(rad2Deg(d))-90;
-//  a = round(rad2Deg(a))-90;
-//  b = round(rad2Deg(b))-90;
-//  c = round(rad2Deg(c))-90;
-//  
-//  Serial.print("Angle base: ");                  
-//  Serial.println(d, DEC);                  
-//  Serial.print("Angle shoulder: ");                  
-//  Serial.println(a, DEC);                    
-//  Serial.print("Angle elbow: ");                  
-//  Serial.println(b, DEC);                  
-//  Serial.print("Angle wrist: ");                  
-//  Serial.println(c, DEC);                  
-//
-//  // Target postion base
-//
-//  int targetPosBase = 0;
-//  int targetPosShoulder = 0;
-//    
-//  targetPosBase = (d*1200/90);
-//  Serial.print("targetPosBase: ");                  
-//  Serial.println(targetPosBase, DEC);                  
-//
-//  targetPosShoulder = (a*1200/90);
-//  Serial.print("targetPosShoulder: ");                  
-//  Serial.println(targetPosShoulder, DEC);                  
-//
+  dx = 31;
+  dy = 0.0;
+  dz = 0.0;
+
+  // d = angle base
+  // a = angle shoulder
+  // b = angle elbow
+  // c = angle wrist
+
+  inverseKinematics(dx,dy,dz);
+
+  Serial.print("Angle base: ");                  
+  Serial.println(round(rad2Deg(d)), DEC);                  
+  Serial.print("Angle shoulder: ");                  
+  Serial.println(round(rad2Deg(a)), DEC);                    
+  Serial.print("Angle elbow: ");                  
+  Serial.println(round(rad2Deg(b)), DEC);                  
+  Serial.print("Angle wrist: ");                  
+  Serial.println(round(rad2Deg(c)), DEC);                  
+  Serial.println("-------------------------");
+
+
+
+  // Initialize angles @90 degrees = postion 0
+  d = round(rad2Deg(d))-90;
+  a = round(rad2Deg(a))-90;
+  b = round(rad2Deg(b))-90;
+  c = round(rad2Deg(c))-90;
+  
+  Serial.print("Angle base: ");                  
+  Serial.println(d, DEC);                  
+  Serial.print("Angle shoulder: ");                  
+  Serial.println(a, DEC);                    
+  Serial.print("Angle elbow: ");                  
+  Serial.println(b, DEC);                  
+  Serial.print("Angle wrist: ");                  
+  Serial.println(c, DEC);                  
+  Serial.println("-------------------------");
+  // Target postion base
+
+  int targetPosBase = 0;
+  int targetPosShoulder = 0;
+  int targetPosElbow = 0;
+  int targetPosWrist = 0;
+      
+  targetPosBase = (d*1200/90);
+  Serial.print("targetPosBase: ");                  
+  Serial.println(targetPosBase, DEC);                  
+
+  targetPosShoulder = (a*1200/90);
+  Serial.print("targetPosShoulder: ");                  
+  Serial.println(targetPosShoulder, DEC);                  
+
+  targetPosElbow = (b*1200/90);
+  Serial.print("targetPosElbow: ");                  
+  Serial.println(targetPosElbow, DEC);                  
+
+  targetPosWrist = (c*1200/90);
+  Serial.print("targetPosWrist: ");                  
+  Serial.println(targetPosWrist, DEC);                  
+
 //  stepper1.moveTo(targetPosBase);
 //  stepper1.runToPosition();
 //  stepper1.setCurrentPosition(0); 
@@ -360,6 +384,13 @@ void setup(){
 //  stepper2.runToPosition();
 //  stepper2.setCurrentPosition(0); 
 //  
+//  stepper3.moveTo(targetPosElbow);
+//  stepper3.runToPosition();
+//  stepper3.setCurrentPosition(0); 
+//
+//  stepper4.moveTo(targetPosWrist);
+//  stepper4.runToPosition();
+//  stepper4.setCurrentPosition(0); 
 }
 
 void loop() {
@@ -671,11 +702,7 @@ void loop() {
 
   if(!stopShoulderPos2){
     if((ps2x.Analog(PSS_RY) == 0)){
-        shoulderPos = shoulderPos+1
-        
-        
-        
-        ;          
+        shoulderPos = shoulderPos+1;          
         //Serial.println(shoulderPos, DEC);                  
     }      
   }
@@ -723,36 +750,27 @@ void loop() {
 // ------ initMotors -------
 // -------------------------
 
-int hitWristSwich1 = 0;
-int hitbaseSwich1 = 0;
-int hitelbowSwich1 = 0;
-int hitshoulderSwich1 = 0;
-
 void initMotors(){
 
   // --------- Homing Base ----------
 
-homingBase = 1;
-homingElbow = 1;
-homingShoulder = 1;
+//homingBase = 1;
+//homingElbow = 1;
+//homingShoulder = 1;
+//homingWrist = 1;
 
   if(!homingBase){
 
-    pos = pos-1;
-    stepper1.moveTo(pos);
-    stepper1.setSpeed(400);    
-    
-    while(stepper1.distanceToGo() !=0 && digitalRead(baseSwich1)){
-      stepper1.runSpeedToPosition();
-
-      if(!digitalRead(baseSwich1)){   
-        stepper1.stop();
-        hitbaseSwich1 = 1;
-        break;
-      }      
+    stepper1.setMaxSpeed(1000);
+    stepper1.setAcceleration(1000);
+  
+    while(digitalRead(baseSwich1)){
+        stepper1.moveTo(pos);
+        pos--;
+        stepper1.run();
+        delay(2);
     }
-    
-    if(hitbaseSwich1){   
+
       stepper1.setCurrentPosition(0); 
       stepper1.setMaxSpeed(1000);
       stepper1.setAcceleration(500);
@@ -761,102 +779,79 @@ homingShoulder = 1;
       stepper1.setCurrentPosition(0); 
       homingBase = 1;
       pos = 0;
-    }
   }
 
   // --------- Homing Wrist ----------
   
   if(homingBase && !homingWrist){
-   
-    pos = pos-1;
-    stepper4.moveTo(pos);
-    stepper4.setSpeed(400);    
-    
-    while(stepper4.distanceToGo()){
-      if(!digitalRead(wristSwich1)){   
-        stepper4.stop();
-        hitWristSwich1 = 1;
-        break;
-      }      
-      else{
-        stepper4.runSpeedToPosition();  
-      }
-    }
 
-    if(hitWristSwich1){         
-      stepper4.setCurrentPosition(0); 
-      stepper4.setMaxSpeed(1000);
-      stepper4.setAcceleration(500);
-      stepper4.moveTo(endPositionWrist);
-      stepper4.runToPosition();
-      stepper4.setCurrentPosition(0); 
-      homingWrist = 1;
-      pos = 0;
+    stepper4.setMaxSpeed(1000);
+    stepper4.setAcceleration(1000);
+  
+    while(digitalRead(wristSwich1)){
+        stepper4.moveTo(pos);
+        pos--;
+        stepper4.run();
+        delay(2);
     }
-  }
+  
+    stepper4.setCurrentPosition(0); 
+    stepper4.setMaxSpeed(1000);
+    stepper4.setAcceleration(500);
+    stepper4.moveTo(endPositionWrist);
+    stepper4.runToPosition();
+    stepper4.setCurrentPosition(0); 
+    homingWrist = 1;
+    pos = 0;
+  } 
+
 
   // --------- Homing Elbow ----------
   
   if(homingBase && homingWrist && !homingElbow){
 
-    pos = pos+1;
-    stepper3.moveTo(pos);
-    stepper3.setSpeed(400);    
-    
-    while(stepper3.distanceToGo() !=0 && digitalRead(elbowSwich1)){
-      stepper3.runSpeedToPosition();
-
-      if(!digitalRead(elbowSwich1)){   
-        stepper3.stop();
-        hitelbowSwich1 = 1;
-        break;
-      }            
+    stepper3.setMaxSpeed(1000);
+    stepper3.setAcceleration(1000);
+  
+    while(digitalRead(elbowSwich1)){
+        stepper3.moveTo(pos);
+        pos++;
+        stepper3.run();
+        delay(2);
     }
-
-    //Serial.println("Move to switch "); 
     
-    if(hitelbowSwich1){   
-      stepper3.setCurrentPosition(0); 
-      stepper3.setMaxSpeed(1000);
-      stepper3.setAcceleration(500);
-      stepper3.moveTo(-endPositionElbow);
-      stepper3.runToPosition();
-      stepper3.setCurrentPosition(0); 
-      homingElbow = 1;
-      pos = 0;
-    }
+    stepper3.setCurrentPosition(0); 
+    stepper3.setMaxSpeed(1000);
+    stepper3.setAcceleration(500);
+    stepper3.moveTo(-endPositionElbow);
+    stepper3.runToPosition();
+    stepper3.setCurrentPosition(0); 
+    homingElbow = 1;
+    pos = 0;
   }
 
   // --------- Homing Shoulder ----------
   
   if(homingBase && homingWrist && homingElbow && !homingShoulder){
 
-    pos = pos-1;
-    stepper2.moveTo(pos);
-    stepper2.setSpeed(400);    
-    
-    while(stepper2.distanceToGo() !=0 && digitalRead(shoulderSwich1)){
-      stepper2.runSpeedToPosition();
-
-      if(!digitalRead(shoulderSwich1)){   
-        stepper2.stop();        
-        hitshoulderSwich1 = 1;
-        break;
-      }            
+    stepper2.setMaxSpeed(1000);
+    stepper2.setAcceleration(1000);
+  
+    while(digitalRead(shoulderSwich1)){
+        stepper2.moveTo(pos);
+        pos--;
+        stepper2.run();
+        delay(2);
     }
 
-    //Serial.println("Move to switch "); 
-    
-    if(hitshoulderSwich1){   
-      stepper2.setCurrentPosition(0); 
-      stepper2.setMaxSpeed(1000);
-      stepper2.setAcceleration(500);
-      stepper2.moveTo(endPositionShoulder);
-      stepper2.runToPosition();
-      stepper2.setCurrentPosition(0); 
-      homingShoulder = 1;
-      pos = 0;
-    }
+    stepper2.setCurrentPosition(0); 
+    stepper2.setMaxSpeed(1000);
+    stepper2.setAcceleration(500);
+    stepper2.moveTo(endPositionShoulder);
+    stepper2.runToPosition();
+    stepper2.setCurrentPosition(0); 
+    homingShoulder = 1;
+    pos = 0;
   }
 
   // --------- Homing Servos ----------
