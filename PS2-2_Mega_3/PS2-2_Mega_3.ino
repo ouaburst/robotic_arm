@@ -412,7 +412,12 @@ void setup(){
 
     if(stepper1.distanceToGo()==0 && stepper2.distanceToGo()==0
         && stepper3.distanceToGo()==0 && stepper4.distanceToGo()==0){
-      moveStepper = 0;          
+      moveStepper = 0;      
+      
+      stepper1.setCurrentPosition(0);    
+      stepper2.setCurrentPosition(0);
+      stepper3.setCurrentPosition(0);
+      stepper4.setCurrentPosition(0);
     }
   }
 }
