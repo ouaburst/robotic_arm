@@ -64,7 +64,7 @@ int shoulderPos;
 float a, b, c, d;   // Joint variables that will be calculated
 
 // EE position
-float dx, dy, dz;
+float dx, dy, dz, dy2;
 
 // ------ servos --------
 
@@ -171,6 +171,7 @@ int baseDir2;
 
 int stepperSteps;
 int DisplayData;
+int moveStepper;
 
 void setup(){  
   //------------ PS2 ---------------   
@@ -221,17 +222,8 @@ void setup(){
    }
 
   //--------------------------------------------
-
+  
   Serial.begin(19200);
-
-  stepper1.setMaxSpeed(1000);         // Base
-  stepper1.setAcceleration(500);
-  stepper4.setMaxSpeed(1000);         // Wrist
-  stepper4.setAcceleration(500);
-  stepper3.setMaxSpeed(1000);         // Elbow
-  stepper3.setAcceleration(500);
-  stepper2.setMaxSpeed(1000);         // Shoulder
-  stepper2.setAcceleration(500);
   
   // ------ servo motors -------
   pinMode(SERVO_PIN, OUTPUT);
@@ -307,7 +299,7 @@ void setup(){
 
   // -------- Homing -------  
   
-  homingDone = 1;
+  //homingDone = 1;
   
   while(!homingDone){
     initMotors();
@@ -315,9 +307,10 @@ void setup(){
 
   // --------------------------------------
 
-  dx = 31;
+  dx = 22;
   dy = 0.0;
-  dz = 0.0;
+  dz = -14.58;
+  dy2 = 10;
 
   // d = angle base
   // a = angle shoulder
@@ -326,23 +319,23 @@ void setup(){
 
   inverseKinematics(dx,dy,dz);
 
-  Serial.print("Angle base: ");                  
-  Serial.println(round(rad2Deg(d)), DEC);                  
-  Serial.print("Angle shoulder: ");                  
-  Serial.println(round(rad2Deg(a)), DEC);                    
-  Serial.print("Angle elbow: ");                  
-  Serial.println(round(rad2Deg(b)), DEC);                  
-  Serial.print("Angle wrist: ");                  
-  Serial.println(round(rad2Deg(c)), DEC);                  
-  Serial.println("-------------------------");
+//  Serial.print("Angle base: ");                  
+//  Serial.println(round(rad2Deg(d)), DEC);                  
+//  Serial.print("Angle shoulder: ");                  
+//  Serial.println(round(rad2Deg(a)), DEC);                    
+//  Serial.print("Angle elbow: ");                  
+//  Serial.println(round(rad2Deg(b)), DEC);                  
+//  Serial.print("Angle wrist: ");                  
+//  Serial.println(round(rad2Deg(c)), DEC);                  
+//  Serial.println("-------------------------");
 
 
 
   // Initialize angles @90 degrees = postion 0
-  d = round(rad2Deg(d))-90;
-  a = round(rad2Deg(a))-90;
-  b = round(rad2Deg(b))-90;
-  c = round(rad2Deg(c))-90;
+  d = round(rad2Deg(atan2(dx,dy2)));
+  a = round(rad2Deg(a));
+  b = round(rad2Deg(b));
+  c = round(rad2Deg(c));
   
   Serial.print("Angle base: ");                  
   Serial.println(d, DEC);                  
@@ -354,6 +347,17 @@ void setup(){
   Serial.println(c, DEC);                  
   Serial.println("-------------------------");
   // Target postion base
+
+  // ----------------------------------------
+  
+  stepper1.setMaxSpeed(1000);         // Base
+  stepper1.setAcceleration(500);
+  stepper4.setMaxSpeed(1000);         // Wrist
+  stepper4.setAcceleration(500);
+  stepper3.setMaxSpeed(1000);         // Elbow
+  stepper3.setAcceleration(500);
+  stepper2.setMaxSpeed(1000);         // Shoulder
+  stepper2.setAcceleration(500);
 
   int targetPosBase = 0;
   int targetPosShoulder = 0;
@@ -368,11 +372,11 @@ void setup(){
   Serial.print("targetPosShoulder: ");                  
   Serial.println(targetPosShoulder, DEC);                  
 
-  targetPosElbow = (b*1200/90);
+  targetPosElbow = ((180-b)*1200/90);
   Serial.print("targetPosElbow: ");                  
   Serial.println(targetPosElbow, DEC);                  
 
-  targetPosWrist = (c*1200/90);
+  targetPosWrist = ((c-180)*1200/90);
   Serial.print("targetPosWrist: ");                  
   Serial.println(targetPosWrist, DEC);                  
 
@@ -380,23 +384,48 @@ void setup(){
 //  stepper1.runToPosition();
 //  stepper1.setCurrentPosition(0); 
 //
-//  stepper2.moveTo(targetPosShoulder);
+
+//  stepper4.moveTo(-targetPosWrist);
+//  stepper4.runToPosition();
+//  stepper4.setCurrentPosition(0); 
+//
+//  stepper2.moveTo(-targetPosShoulder);
 //  stepper2.runToPosition();
 //  stepper2.setCurrentPosition(0); 
 //  
-//  stepper3.moveTo(targetPosElbow);
+//  stepper3.moveTo(-targetPosElbow);
 //  stepper3.runToPosition();
 //  stepper3.setCurrentPosition(0); 
-//
-//  stepper4.moveTo(targetPosWrist);
-//  stepper4.runToPosition();
-//  stepper4.setCurrentPosition(0); 
+  
+  stepper4.moveTo(-targetPosWrist);
+  stepper2.moveTo(-targetPosShoulder);
+  stepper3.moveTo(-targetPosElbow);
+  stepper1.moveTo(targetPosBase);
+
+  moveStepper = 1;
+
+  while(moveStepper){
+    stepper4.run();    
+    stepper2.run();     
+    stepper3.run();    
+    stepper1.run();   
+
+    if(stepper1.distanceToGo()==0 && stepper2.distanceToGo()==0
+        && stepper3.distanceToGo()==0 && stepper4.distanceToGo()==0){
+      moveStepper = 0;          
+    }
+  }
 }
 
 void loop() {
  
   if(error == 1) //skip loop if no controller found
     return; 
+
+  // ------------ IK move -----------
+
+
+  
     
   // -----------------------------------
   // ----------- Base limits -----------
@@ -788,7 +817,8 @@ void initMotors(){
     stepper4.setMaxSpeed(1000);
     stepper4.setAcceleration(1000);
   
-    while(digitalRead(wristSwich1)){
+    //while(digitalRead(wristSwich1)){
+    while(digitalRead(baseSwich1)){
         stepper4.moveTo(pos);
         pos--;
         stepper4.run();
@@ -878,7 +908,13 @@ void initMotors(){
   }
 }
 
-// Calculate angles
+// ------------------------------------------------
+// -- Inverse Kinematics
+// -- From https://www.robotshop.com
+// Inparameters EE x,y,z coordinates
+// Return angles for base,shoulder, elbow and wrist
+// ------------------------------------------------
+
 void inverseKinematics(float dx ,float dy ,float dz){
 
   float R,S,Q,f,g;
