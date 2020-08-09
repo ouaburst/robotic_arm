@@ -119,14 +119,26 @@ char char_array[256];
 char *token;
 
 // --- Switches ---
-#define shoulderSwich1 36  // switsh3
-#define shoulderSwich2 37  // switsh4
-#define elbowSwich1 40  // switsh5
-#define elbowSwich2 38  // switsh6
-#define wristSwich1 39  // switsh7
-#define wristSwich2 41  // switsh8
-#define baseSwich1 42   // switch1
+// Move all the switch to one port
+// Move to switch 43
+
+#define shoulderSwich1 43  // switsh3
+#define shoulderSwich2 43  // switsh4
+#define elbowSwich1 43  // switsh5
+#define elbowSwich2 43  // switsh6
+#define wristSwich1 43  // switsh7
+#define wristSwich2 43  // switsh8
+#define baseSwich1 43   // switch1
 #define baseSwich2 43   // switch2
+
+//#define shoulderSwich1 36  // switsh3
+//#define shoulderSwich2 37  // switsh4
+//#define elbowSwich1 40  // switsh5
+//#define elbowSwich2 38  // switsh6
+//#define wristSwich1 39  // switsh7
+//#define wristSwich2 41  // switsh8
+//#define baseSwich1 42   // switch1
+//#define baseSwich2 43   // switch2
 
 // --- Limit positions ---
 int stopBasePos1;
@@ -298,14 +310,14 @@ void setup(){
   DisplayData = 0;
 
   // -------- Homing -------  
-  
+
   //homingDone = 1;
   
   while(!homingDone){
     initMotors();
   }
 
-  // --------------------------------------
+  // -------------- Position1 -------------
 
   dx = 22;
   dy = 0.0;
@@ -319,24 +331,12 @@ void setup(){
 
   inverseKinematics(dx,dy,dz);
 
-//  Serial.print("Angle base: ");                  
-//  Serial.println(round(rad2Deg(d)), DEC);                  
-//  Serial.print("Angle shoulder: ");                  
-//  Serial.println(round(rad2Deg(a)), DEC);                    
-//  Serial.print("Angle elbow: ");                  
-//  Serial.println(round(rad2Deg(b)), DEC);                  
-//  Serial.print("Angle wrist: ");                  
-//  Serial.println(round(rad2Deg(c)), DEC);                  
-//  Serial.println("-------------------------");
-
-
-
   // Initialize angles @90 degrees = postion 0
   d = round(rad2Deg(atan2(dx,dy2)));
   a = round(rad2Deg(a));
   b = round(rad2Deg(b));
   c = round(rad2Deg(c));
-  
+
   Serial.print("Angle base: ");                  
   Serial.println(d, DEC);                  
   Serial.print("Angle shoulder: ");                  
@@ -346,9 +346,6 @@ void setup(){
   Serial.print("Angle wrist: ");                  
   Serial.println(c, DEC);                  
   Serial.println("-------------------------");
-  // Target postion base
-
-  // ----------------------------------------
   
   stepper1.setMaxSpeed(1000);         // Base
   stepper1.setAcceleration(500);
@@ -380,23 +377,6 @@ void setup(){
   Serial.print("targetPosWrist: ");                  
   Serial.println(targetPosWrist, DEC);                  
 
-//  stepper1.moveTo(targetPosBase);
-//  stepper1.runToPosition();
-//  stepper1.setCurrentPosition(0); 
-//
-
-//  stepper4.moveTo(-targetPosWrist);
-//  stepper4.runToPosition();
-//  stepper4.setCurrentPosition(0); 
-//
-//  stepper2.moveTo(-targetPosShoulder);
-//  stepper2.runToPosition();
-//  stepper2.setCurrentPosition(0); 
-//  
-//  stepper3.moveTo(-targetPosElbow);
-//  stepper3.runToPosition();
-//  stepper3.setCurrentPosition(0); 
-  
   stepper4.moveTo(-targetPosWrist);
   stepper2.moveTo(-targetPosShoulder);
   stepper3.moveTo(-targetPosElbow);
@@ -408,18 +388,106 @@ void setup(){
     stepper4.run();    
     stepper2.run();     
     stepper3.run();    
-    stepper1.run();   
+    //stepper1.run();   // Base
 
-    if(stepper1.distanceToGo()==0 && stepper2.distanceToGo()==0
+    if(stepper2.distanceToGo()==0
         && stepper3.distanceToGo()==0 && stepper4.distanceToGo()==0){
-      moveStepper = 0;      
       
-      stepper1.setCurrentPosition(0);    
+      //stepper1.setCurrentPosition(0);    
       stepper2.setCurrentPosition(0);
       stepper3.setCurrentPosition(0);
       stepper4.setCurrentPosition(0);
+      moveStepper = 0;     
     }
   }
+
+  servoPos = 35;
+
+  for(int i=0 ; i<servoPos; i++){
+    myservo.write(i);
+    delay(5);                                    
+  }                
+
+  // -------------- Position2 -------------
+
+  dx = 24;
+  dy = 0.0;
+  dz = 13;
+  dy2 = 10;
+
+  // d = angle base
+  // a = angle shoulder
+  // b = angle elbow
+  // c = angle wrist
+
+  inverseKinematics(dx,dy,dz);
+
+  // Initialize angles @90 degrees = postion 0
+  d = round(rad2Deg(atan2(dx,dy2)));
+  a = round(rad2Deg(a));
+  b = round(rad2Deg(b));
+  c = round(rad2Deg(c));
+
+  Serial.print("Angle base: ");                  
+  Serial.println(d, DEC);                  
+  Serial.print("Angle shoulder: ");                  
+  Serial.println(a, DEC);                    
+  Serial.print("Angle elbow: ");                  
+  Serial.println(b, DEC);                  
+  Serial.print("Angle wrist: ");                  
+  Serial.println(c, DEC);                  
+  Serial.println("-------------------------");
+  
+  stepper1.setMaxSpeed(1000);         // Base
+  stepper1.setAcceleration(500);
+  stepper4.setMaxSpeed(1000);         // Wrist
+  stepper4.setAcceleration(500);
+  stepper3.setMaxSpeed(1000);         // Elbow
+  stepper3.setAcceleration(500);
+  stepper2.setMaxSpeed(1000);         // Shoulder
+  stepper2.setAcceleration(500);
+
+  targetPosBase = (d*1200/90);
+  Serial.print("targetPosBase: ");                  
+  Serial.println(targetPosBase, DEC);                  
+
+  targetPosShoulder = (a*1200/90);
+  Serial.print("targetPosShoulder: ");                  
+  Serial.println(targetPosShoulder, DEC);                  
+
+  targetPosElbow = ((180-b)*1200/90);
+  Serial.print("targetPosElbow: ");                  
+  Serial.println(targetPosElbow, DEC);                  
+
+  targetPosWrist = ((c-180)*1200/90);
+  Serial.print("targetPosWrist: ");                  
+  Serial.println(targetPosWrist, DEC);                  
+
+  stepper4.moveTo(-targetPosWrist);
+  stepper2.moveTo(-targetPosShoulder);
+  stepper3.moveTo(-targetPosElbow);
+  stepper1.moveTo(targetPosBase);
+
+  moveStepper = 1;
+
+  while(moveStepper){
+    stepper4.run();    
+    stepper2.run();     
+    stepper3.run();    
+    //stepper1.run();   // Base
+
+    if(stepper2.distanceToGo()==0
+        && stepper3.distanceToGo()==0 && stepper4.distanceToGo()==0){
+      
+      //stepper1.setCurrentPosition(0);    
+      stepper2.setCurrentPosition(0);
+      stepper3.setCurrentPosition(0);
+      stepper4.setCurrentPosition(0);
+      moveStepper = 0;            
+    }
+  }
+
+  
 }
 
 void loop() {
