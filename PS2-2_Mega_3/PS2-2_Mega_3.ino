@@ -408,27 +408,43 @@ void setup(){
   stepper3.moveTo(-targetPosElbow);
   stepper1.moveTo(targetPosBase);
 
+  // -------- First wrist ---------
+  
   moveStepper = 1;
 
   while(moveStepper){
     stepper4.run();    
+
+    if(stepper4.distanceToGo()==0){      
+      stepper4.setCurrentPosition(0);
+      moveStepper = 0;     
+    }
+  }
+
+  // -------- Shoulder + Elbow ---------
+  
+  moveStepper = 1;
+
+  while(moveStepper){
+    //stepper4.run();    
     stepper2.run();     
     stepper3.run();    
     //stepper1.run();   // Base
 
     if(stepper2.distanceToGo()==0
        && stepper3.distanceToGo()==0 
-       && stepper4.distanceToGo()==0){
+       //&& stepper4.distanceToGo()==0
+       ){
       
       //stepper1.setCurrentPosition(0);    
       stepper2.setCurrentPosition(0);
       stepper3.setCurrentPosition(0);
-      stepper4.setCurrentPosition(0);
+      //stepper4.setCurrentPosition(0);
       moveStepper = 0;     
     }
   }
 
-  delay(2000);
+  delay(30000);
   
   servoPos = 45;
 
@@ -515,19 +531,30 @@ void setup(){
   moveStepper = 1;
 
   while(moveStepper){
-    stepper4.run();    
+    //stepper4.run();    
     stepper2.run();     
     stepper3.run();    
     //stepper1.run();   // Base
 
     if(stepper2.distanceToGo()==0
        && stepper3.distanceToGo()==0 
-       && stepper4.distanceToGo()==0
+       //&& stepper4.distanceToGo()==0
        ){
       
       //stepper1.setCurrentPosition(0);    
       stepper2.setCurrentPosition(0);
       stepper3.setCurrentPosition(0);
+      //stepper4.setCurrentPosition(0);
+      moveStepper = 0;            
+    }
+  }
+
+  moveStepper = 1;
+
+  while(moveStepper){
+    stepper4.run();    
+
+    if(stepper4.distanceToGo()==0){
       stepper4.setCurrentPosition(0);
       moveStepper = 0;            
     }
@@ -569,7 +596,11 @@ void setup(){
   Serial.print("Angle wrist: ");                  
   Serial.println(c, DEC);                  
   Serial.println("--");
-  
+
+  a -= angle[1].a;
+  b -= angle[1].b;
+  c -= angle[1].c;
+    
   stepper1.setMaxSpeed(1500);         // Base
   stepper1.setAcceleration(1000);
   stepper4.setMaxSpeed(1500);         // Wrist
@@ -602,17 +633,17 @@ void setup(){
   stepper3.moveTo(targetPosElbow);
   stepper1.moveTo(-targetPosBase);
 
-  moveStepper = 0;
+  moveStepper = 1;
 
   while(moveStepper){
-    //stepper4.run();    
+    stepper4.run();    
     stepper2.run();     
-    //stepper3.run();    
+    stepper3.run();    
     stepper1.run();   // Base
 
     if(stepper2.distanceToGo()==0
-       //&& stepper3.distanceToGo()==0 
-       //&& stepper4.distanceToGo()==0
+       && stepper3.distanceToGo()==0 
+       && stepper4.distanceToGo()==0
        && stepper1.distanceToGo()==0       
        ){
       
@@ -623,6 +654,15 @@ void setup(){
       moveStepper = 0;            
     }
   }
+
+  delay(2000);
+  
+  servoPos = 0;
+
+  for(int i=45 ; i>servoPos; i--){
+    myservo.write(i);
+    delay(5);
+  }                
     
 }
 
