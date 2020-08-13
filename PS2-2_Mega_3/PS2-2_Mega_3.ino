@@ -137,14 +137,16 @@ char *token;
 // Move all the switch to one port
 // Move to switch 43
 
-#define shoulderSwich1 43  // switsh3
-#define shoulderSwich2 43  // switsh4
-#define elbowSwich1 43  // switsh5
-#define elbowSwich2 43  // switsh6
-#define wristSwich1 43  // switsh7
-#define wristSwich2 43  // switsh8
-#define baseSwich1 43   // switch1
-#define baseSwich2 43   // switch2
+#define pinSwich 43  // switsh
+
+//#define shoulderSwich1 43  // switsh3
+//#define shoulderSwich2 43  // switsh4
+//#define elbowSwich1 43  // switsh5
+//#define elbowSwich2 43  // switsh6
+//#define wristSwich1 43  // switsh7
+//#define wristSwich2 43  // switsh8
+//#define baseSwich1 43   // switch1
+//#define baseSwich2 43   // switch2
 
 //#define shoulderSwich1 36  // switsh3
 //#define shoulderSwich2 37  // switsh4
@@ -156,14 +158,17 @@ char *token;
 //#define baseSwich2 43   // switch2
 
 // --- Limit positions ---
-int stopBasePos1;
-int stopBasePos2;
-int stopWristPos1;
-int stopWristPos2;
-int stopElbowPos1;
-int stopElbowPos2;
-int stopShoulderPos1;
-int stopShoulderPos2;
+
+int stopStepMotor;
+
+//int stopBasePos1;
+//int stopBasePos2;
+//int stopWristPos1;
+//int stopWristPos2;
+//int stopElbowPos1;
+//int stopElbowPos2;
+//int stopShoulderPos1;
+//int stopShoulderPos2;
 
 // ------ Stepper motor speed -------
 # define STEP_MOTOR_SPEED_BASE 400
@@ -200,7 +205,7 @@ int stepperSteps;
 int DisplayData;
 int moveStepper;
 
-
+int baseStop1,baseStop2;
 
 void setup(){  
   //------------ PS2 ---------------   
@@ -274,14 +279,14 @@ void setup(){
   posIndex = 0;
   
   // ------ Switch pins ---------
-  pinMode(shoulderSwich1, INPUT_PULLUP); 
-  pinMode(shoulderSwich2, INPUT_PULLUP); 
-  pinMode(elbowSwich1, INPUT_PULLUP); 
-  pinMode(elbowSwich2, INPUT_PULLUP); 
-  pinMode(baseSwich1, INPUT_PULLUP); 
-  pinMode(baseSwich2, INPUT_PULLUP); 
-  pinMode(wristSwich1, INPUT_PULLUP); 
-  pinMode(wristSwich2, INPUT_PULLUP); 
+  pinMode(pinSwich, INPUT_PULLUP); 
+//  pinMode(shoulderSwich2, INPUT_PULLUP); 
+//  pinMode(elbowSwich1, INPUT_PULLUP); 
+//  pinMode(elbowSwich2, INPUT_PULLUP); 
+//  pinMode(baseSwich1, INPUT_PULLUP); 
+//  pinMode(baseSwich2, INPUT_PULLUP); 
+//  pinMode(wristSwich1, INPUT_PULLUP); 
+//  pinMode(wristSwich2, INPUT_PULLUP); 
 
   //attachPCINT(digitalPinToPCINT(wristSwich2), homeWrist, CHANGE);
   
@@ -292,14 +297,18 @@ void setup(){
   homingDone = 0;
   
   // ------ Limit values -------
-  stopBasePos1 = 0;
-  stopBasePos2 = 0;
-  stopWristPos1 = 0;
-  stopWristPos2 = 0;
-  stopElbowPos1 = 0;
-  stopElbowPos2 = 0;
-  stopShoulderPos1 = 0;
-  stopShoulderPos2 = 0;
+  stopStepMotor = 0;
+//  stopBasePos2 = 0;
+//  stopWristPos1 = 0;
+//  stopWristPos2 = 0;
+//  stopElbowPos1 = 0;
+//  stopElbowPos2 = 0;
+//  stopShoulderPos1 = 0;
+//  stopShoulderPos2 = 0;
+
+    baseStop1 = 0;
+    baseStop2 = 0;
+
 
   // ---------- For homing ----------------
   endPositionBase = 1200;
@@ -426,25 +435,25 @@ void setup(){
   moveStepper = 1;
 
   while(moveStepper){
-    //stepper4.run();    
+    stepper4.run();    
     stepper2.run();     
     stepper3.run();    
     //stepper1.run();   // Base
 
     if(stepper2.distanceToGo()==0
        && stepper3.distanceToGo()==0 
-       //&& stepper4.distanceToGo()==0
+       && stepper4.distanceToGo()==0
        ){
       
       //stepper1.setCurrentPosition(0);    
       stepper2.setCurrentPosition(0);
       stepper3.setCurrentPosition(0);
-      //stepper4.setCurrentPosition(0);
+      stepper4.setCurrentPosition(0);
       moveStepper = 0;     
     }
   }
 
-  delay(30000);
+  delay(2000);
   
   servoPos = 45;
 
@@ -657,7 +666,7 @@ void setup(){
 
   delay(2000);
   
-  servoPos = 0;
+  servoPos = 1;
 
   for(int i=45 ; i>servoPos; i--){
     myservo.write(i);
@@ -671,91 +680,106 @@ void loop() {
   if(error == 1) //skip loop if no controller found
     return; 
     
-  // -----------------------------------
-  // ----------- Base limits -----------
-  // -----------------------------------
-  
-  if(!digitalRead(baseSwich1)){
-    stopBasePos1 = 1;   
+  // ------------------------------
+  // ----------- Limits -----------
+  // ------------------------------
+
+  if(!digitalRead(pinSwich)){
+    Serial.println("pinSwich ON");
+    stopStepMotor = 1;
     tone(buzzer, 1950); 
   }else{
-    stopBasePos1 = 0;
+    stopStepMotor = 0;
     noTone(buzzer); 
   }
-
-  if(!digitalRead(baseSwich2)){
-    stopBasePos2 = 1;
-    tone(buzzer, 1950); 
-  }else{
-    stopBasePos2 = 0;
-    noTone(buzzer); 
-  }  
-
-  // -----------------------------------
-  // ----------- Wrist limits ----------
-  // -----------------------------------
   
-  if(!digitalRead(wristSwich1)){
-
-    Serial.println("wristSwich1");           
-        
-    stopWristPos1 = 1;   
-    tone(buzzer, 1950); 
-  }else{
-    stopWristPos1 = 0;
-    noTone(buzzer); 
-  }
-
-  if(!digitalRead(wristSwich2)){
-
-    Serial.println("wristSwich2");           
-    
-    stopWristPos2 = 1;
-    tone(buzzer, 1950); 
-  }else{
-    stopWristPos2 = 0;
-    noTone(buzzer); 
-  }  
-
-  // -----------------------------------
-  // ----------- Elbow limits ----------
-  // -----------------------------------
   
-  if(!digitalRead(elbowSwich1)){
-    stopElbowPos1 = 1;   
-    tone(buzzer, 1950); 
-  }else{
-    stopElbowPos1 = 0;
-    noTone(buzzer); 
-  }
-
-  if(!digitalRead(elbowSwich2)){
-    stopElbowPos2 = 1;
-    tone(buzzer, 1950); 
-  }else{
-    stopElbowPos2 = 0;
-    noTone(buzzer); 
-  }  
-
-  // --------------------------------------
-  // ----------- Shoulder limits ----------
-  // --------------------------------------
   
-  if(!digitalRead(shoulderSwich1)){
-    stopShoulderPos1 = 1;   
-    tone(buzzer, 1950); 
-  }else{
-    stopShoulderPos1 = 0;
-    noTone(buzzer); 
-  }
-
-  if(!digitalRead(shoulderSwich2)){
-    stopShoulderPos2 = 1;
-    tone(buzzer, 1950); 
-  }else{
-    stopShoulderPos2 = 0;
-    noTone(buzzer); 
-  }  
+//  // -----------------------------------
+//  // ----------- Base limits -----------
+//  // -----------------------------------
+//  
+//  if(!digitalRead(baseSwich1)){
+//    stopBasePos1 = 1;   
+//    tone(buzzer, 1950); 
+//  }else{
+//    stopBasePos1 = 0;
+//    noTone(buzzer); 
+//  }
+//
+//  if(!digitalRead(baseSwich2)){
+//    stopBasePos2 = 1;
+//    tone(buzzer, 1950); 
+//  }else{
+//    stopBasePos2 = 0;
+//    noTone(buzzer); 
+//  }  
+//
+//  // -----------------------------------
+//  // ----------- Wrist limits ----------
+//  // -----------------------------------
+//  
+//  if(!digitalRead(wristSwich1)){
+//
+//    Serial.println("wristSwich1");           
+//        
+//    stopWristPos1 = 1;   
+//    tone(buzzer, 1950); 
+//  }else{
+//    stopWristPos1 = 0;
+//    noTone(buzzer); 
+//  }
+//
+//  if(!digitalRead(wristSwich2)){
+//
+//    Serial.println("wristSwich2");           
+//    
+//    stopWristPos2 = 1;
+//    tone(buzzer, 1950); 
+//  }else{
+//    stopWristPos2 = 0;
+//    noTone(buzzer); 
+//  }  
+//
+//  // -----------------------------------
+//  // ----------- Elbow limits ----------
+//  // -----------------------------------
+//  
+//  if(!digitalRead(elbowSwich1)){
+//    stopElbowPos1 = 1;   
+//    tone(buzzer, 1950); 
+//  }else{
+//    stopElbowPos1 = 0;
+//    noTone(buzzer); 
+//  }
+//
+//  if(!digitalRead(elbowSwich2)){
+//    stopElbowPos2 = 1;
+//    tone(buzzer, 1950); 
+//  }else{
+//    stopElbowPos2 = 0;
+//    noTone(buzzer); 
+//  }  
+//
+//  // --------------------------------------
+//  // ----------- Shoulder limits ----------
+//  // --------------------------------------
+//  
+//  if(!digitalRead(shoulderSwich1)){
+//    stopShoulderPos1 = 1;   
+//    tone(buzzer, 1950); 
+//  }else{
+//    stopShoulderPos1 = 0;
+//    noTone(buzzer); 
+//  }
+//
+//  if(!digitalRead(shoulderSwich2)){
+//    stopShoulderPos2 = 1;
+//    tone(buzzer, 1950); 
+//  }else{
+//    stopShoulderPos2 = 0;
+//    noTone(buzzer); 
+//  }  
 
   // --------------------------------------------
   // ------------- Servo1 gripper ---------------
@@ -893,16 +917,42 @@ void loop() {
 //    }      
 //  }
 
-  if(!stopBasePos2){
-    if((ps2x.Analog(PSS_RX) == 255)){  
-      basePos = basePos+1;
-    }
-  }
+  
 
-  if(!stopBasePos1){
-    if((ps2x.Analog(PSS_RX) == 0)){
-      basePos = basePos-1;  
-    }      
+  if(!stopStepMotor){
+
+    if((ps2x.Analog(PSS_RX) == 255)){  
+  
+      Serial.println("Base dir1");      
+      
+      if(baseStop2){
+        baseStop2 = 0;
+      }
+  
+      if(!stopStepMotor && !baseStop2){
+        basePos = basePos+1;
+      }else{
+        baseStop1 = 1;
+      }
+    }
+    
+  }
+  
+
+  if((ps2x.Analog(PSS_RX) == 0)){
+
+    Serial.println("Base dir2");          
+
+    if(baseStop1){
+      baseStop1 = 0;
+    }
+    
+    if(!stopStepMotor && !baseStop1){
+      basePos = basePos-1;      
+    }else{
+      baseStop2 = 1;          
+    }
+
   }
 
   stepper1.moveTo(basePos);
@@ -916,19 +966,15 @@ void loop() {
   // ------ Move stepper motor#4 Wrist with PS2 joystick -------
   //------------------------------------------------------------
   
-  if(!stopWristPos2){
-    if((ps2x.Analog(PSS_LY) == 255)){                      
+  if((ps2x.Analog(PSS_LY) == 255) && !stopStepMotor){
         wristPos = wristPos+1;          
         //Serial.println(wristPos, DEC);                  
-    }                      
   }
 
-  if(!stopWristPos1){
-    if((ps2x.Analog(PSS_LY) == 0)){
-        wristPos = wristPos-1;          
-        //Serial.println(wristPos, DEC);                  
-    }      
-  }
+  if((ps2x.Analog(PSS_LY) == 0) && !stopStepMotor){
+      wristPos = wristPos-1;          
+      //Serial.println(wristPos, DEC);                  
+  }      
   
   stepper4.moveTo(wristPos);
   stepper4.setSpeed(STEP_MOTOR_SPEED_WRIST);    
@@ -941,19 +987,15 @@ void loop() {
   // ------ Move stepper motor#3 Elbow with PS2 joystick -------
   //------------------------------------------------------------
   
-  if(!stopElbowPos2){
-    if((ps2x.Analog(PSS_LX) == 255)){                      
-        elbowPos = elbowPos-1;          
-        //Serial.println(elbowPos, DEC);                  
-    }                      
-  }
+  if((ps2x.Analog(PSS_LX) == 255) && !stopStepMotor){
+      elbowPos = elbowPos-1;          
+      //Serial.println(elbowPos, DEC);                  
+  }                      
 
-  if(!stopElbowPos1){
-    if((ps2x.Analog(PSS_LX) == 0)){
-        elbowPos = elbowPos+1;          
-        //Serial.println(elbowPos, DEC);                  
-    }      
-  }
+  if((ps2x.Analog(PSS_LX) == 0) && !stopStepMotor){
+      elbowPos = elbowPos+1;          
+      //Serial.println(elbowPos, DEC);                  
+  }      
       
   stepper3.moveTo(elbowPos);
   stepper3.setSpeed(STEP_MOTOR_SPEED_ELBOW);    
@@ -966,19 +1008,15 @@ void loop() {
   // ------ Move stepper motor#2 Shoulder with PS2 joystick -------
   //---------------------------------------------------------------
   
-  if(!stopShoulderPos1){
-    if((ps2x.Analog(PSS_RY) == 255)){                      
-        shoulderPos = shoulderPos-1;          
-        //Serial.println(shoulderPos, DEC);                  
-    }                      
-  }
+  if((ps2x.Analog(PSS_RY) == 255) && !stopStepMotor){
+      shoulderPos = shoulderPos-1;          
+      //Serial.println(shoulderPos, DEC);                  
+  }                      
 
-  if(!stopShoulderPos2){
-    if((ps2x.Analog(PSS_RY) == 0)){
-        shoulderPos = shoulderPos+1;          
-        //Serial.println(shoulderPos, DEC);                  
-    }      
-  }
+  if((ps2x.Analog(PSS_RY) == 0) && !stopStepMotor){
+      shoulderPos = shoulderPos+1;          
+      //Serial.println(shoulderPos, DEC);                  
+  }      
       
   stepper2.moveTo(shoulderPos);
   stepper2.setSpeed(STEP_MOTOR_SPEED_SHOULDER);    
@@ -1037,11 +1075,11 @@ void initMotors(){
     stepper1.setMaxSpeed(1000);
     stepper1.setAcceleration(1000);
   
-    while(digitalRead(baseSwich1)){
+    while(digitalRead(pinSwich)){
         stepper1.moveTo(pos);
         pos--;
         stepper1.run();
-        //delay(1);
+        delay(2);
     }
 
       stepper1.setCurrentPosition(0); 
@@ -1061,8 +1099,7 @@ void initMotors(){
     stepper4.setMaxSpeed(1000);
     stepper4.setAcceleration(1000);
   
-    //while(digitalRead(wristSwich1)){
-    while(digitalRead(baseSwich1)){
+    while(digitalRead(pinSwich)){
         stepper4.moveTo(pos);
         pos--;
         stepper4.run();
@@ -1087,7 +1124,7 @@ void initMotors(){
     stepper3.setMaxSpeed(1000);
     stepper3.setAcceleration(1000);
   
-    while(digitalRead(elbowSwich1)){
+    while(digitalRead(pinSwich)){
         stepper3.moveTo(pos);
         pos++;
         stepper3.run();
@@ -1111,7 +1148,7 @@ void initMotors(){
     stepper2.setMaxSpeed(1000);
     stepper2.setAcceleration(1000);
   
-    while(digitalRead(shoulderSwich1)){
+    while(digitalRead(pinSwich)){
         stepper2.moveTo(pos);
         pos--;
         stepper2.run();
