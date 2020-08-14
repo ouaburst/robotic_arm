@@ -158,17 +158,7 @@ char *token;
 //#define baseSwich2 43   // switch2
 
 // --- Limit positions ---
-
 int pinSwichOn;
-
-//int stopBasePos1;
-//int stopBasePos2;
-//int stopWristPos1;
-//int stopWristPos2;
-//int stopElbowPos1;
-//int stopElbowPos2;
-//int stopShoulderPos1;
-//int stopShoulderPos2;
 
 // ------ Stepper motor speed -------
 # define STEP_MOTOR_SPEED_BASE 400
@@ -206,6 +196,9 @@ int DisplayData;
 int moveStepper;
 
 int baseStepMove1,baseStepMove2;
+int shoulerStepMove1,shoulerStepMove2;
+int elbowStepMove1,elbowStepMove2;
+int wristStepMove1,wristStepMove2;
 
 void setup(){  
   //------------ PS2 ---------------   
@@ -280,13 +273,6 @@ void setup(){
   
   // ------ Switch pins ---------
   pinMode(pinSwich, INPUT_PULLUP); 
-//  pinMode(shoulderSwich2, INPUT_PULLUP); 
-//  pinMode(elbowSwich1, INPUT_PULLUP); 
-//  pinMode(elbowSwich2, INPUT_PULLUP); 
-//  pinMode(baseSwich1, INPUT_PULLUP); 
-//  pinMode(baseSwich2, INPUT_PULLUP); 
-//  pinMode(wristSwich1, INPUT_PULLUP); 
-//  pinMode(wristSwich2, INPUT_PULLUP); 
 
   //attachPCINT(digitalPinToPCINT(wristSwich2), homeWrist, CHANGE);
   
@@ -298,16 +284,15 @@ void setup(){
   
   // ------ Limit values -------
   pinSwichOn = 0;
-//  stopBasePos2 = 0;
-//  stopWristPos1 = 0;
-//  stopWristPos2 = 0;
-//  stopElbowPos1 = 0;
-//  stopElbowPos2 = 0;
-//  stopShoulderPos1 = 0;
-//  stopShoulderPos2 = 0;
 
   baseStepMove1 = 1;
   baseStepMove2 = 1;
+  shoulerStepMove1 = 1;
+  shoulerStepMove2 = 1;
+  elbowStepMove1 = 1;
+  elbowStepMove2 = 1;
+  wristStepMove1 = 1;
+  wristStepMove2 = 1;
 
   // ---------- For homing ----------------
   endPositionBase = 1200;
@@ -692,92 +677,6 @@ void loop() {
     noTone(buzzer); 
   }
   
-//  // -----------------------------------
-//  // ----------- Base limits -----------
-//  // -----------------------------------
-//  
-//  if(!digitalRead(baseSwich1)){
-//    stopBasePos1 = 1;   
-//    tone(buzzer, 1950); 
-//  }else{
-//    stopBasePos1 = 0;
-//    noTone(buzzer); 
-//  }
-//
-//  if(!digitalRead(baseSwich2)){
-//    stopBasePos2 = 1;
-//    tone(buzzer, 1950); 
-//  }else{
-//    stopBasePos2 = 0;
-//    noTone(buzzer); 
-//  }  
-//
-//  // -----------------------------------
-//  // ----------- Wrist limits ----------
-//  // -----------------------------------
-//  
-//  if(!digitalRead(wristSwich1)){
-//
-//    Serial.println("wristSwich1");           
-//        
-//    stopWristPos1 = 1;   
-//    tone(buzzer, 1950); 
-//  }else{
-//    stopWristPos1 = 0;
-//    noTone(buzzer); 
-//  }
-//
-//  if(!digitalRead(wristSwich2)){
-//
-//    Serial.println("wristSwich2");           
-//    
-//    stopWristPos2 = 1;
-//    tone(buzzer, 1950); 
-//  }else{
-//    stopWristPos2 = 0;
-//    noTone(buzzer); 
-//  }  
-//
-//  // -----------------------------------
-//  // ----------- Elbow limits ----------
-//  // -----------------------------------
-//  
-//  if(!digitalRead(elbowSwich1)){
-//    stopElbowPos1 = 1;   
-//    tone(buzzer, 1950); 
-//  }else{
-//    stopElbowPos1 = 0;
-//    noTone(buzzer); 
-//  }
-//
-//  if(!digitalRead(elbowSwich2)){
-//    stopElbowPos2 = 1;
-//    tone(buzzer, 1950); 
-//  }else{
-//    stopElbowPos2 = 0;
-//    noTone(buzzer); 
-//  }  
-//
-//  // --------------------------------------
-//  // ----------- Shoulder limits ----------
-//  // --------------------------------------
-//  
-//  if(!digitalRead(shoulderSwich1)){
-//    stopShoulderPos1 = 1;   
-//    tone(buzzer, 1950); 
-//  }else{
-//    stopShoulderPos1 = 0;
-//    noTone(buzzer); 
-//  }
-//
-//  if(!digitalRead(shoulderSwich2)){
-//    stopShoulderPos2 = 1;
-//    tone(buzzer, 1950); 
-//  }else{
-//    stopShoulderPos2 = 0;
-//    noTone(buzzer); 
-//  }  
-
   // --------------------------------------------
   // ------------- Servo1 gripper ---------------
   // --------------------------------------------
@@ -954,13 +853,29 @@ void loop() {
   //------------------------------------------------------------
   
   if((ps2x.Analog(PSS_LY) == 255)){
-        wristPos = wristPos+1;          
-        //Serial.println(wristPos, DEC);                  
+    if(pinSwichOn){
+      wristStepMove1 = 0;     
+    }else{
+      wristStepMove1 = 1;     
+      wristStepMove2 = 1;           
+    }
+    
+    if(!pinSwichOn || !wristStepMove2){      
+      wristPos = wristPos+1;          
+    }    
   }
 
   if((ps2x.Analog(PSS_LY) == 0)){
+    if(pinSwichOn){
+      wristStepMove2 = 0;     
+    }else{
+      wristStepMove2 = 1;     
+      wristStepMove1 = 1;           
+    }
+    
+    if(!pinSwichOn || !wristStepMove1){            
       wristPos = wristPos-1;          
-      //Serial.println(wristPos, DEC);                  
+    }
   }      
   
   stepper4.moveTo(wristPos);
@@ -975,13 +890,29 @@ void loop() {
   //------------------------------------------------------------
   
   if((ps2x.Analog(PSS_LX) == 255)){
+    if(pinSwichOn){
+      elbowStepMove1 = 0;     
+    }else{
+      elbowStepMove1 = 1;     
+      elbowStepMove2 = 1;           
+    }
+    
+    if(!pinSwichOn || !elbowStepMove2){      
       elbowPos = elbowPos-1;          
-      //Serial.println(elbowPos, DEC);                  
+    }    
   }                      
 
   if((ps2x.Analog(PSS_LX) == 0)){
+    if(pinSwichOn){
+      elbowStepMove2 = 0;     
+    }else{
+      elbowStepMove2 = 1;     
+      elbowStepMove1 = 1;           
+    }
+    
+    if(!pinSwichOn || !elbowStepMove1){            
       elbowPos = elbowPos+1;          
-      //Serial.println(elbowPos, DEC);                  
+    }
   }      
       
   stepper3.moveTo(elbowPos);
@@ -996,13 +927,29 @@ void loop() {
   //---------------------------------------------------------------
   
   if((ps2x.Analog(PSS_RY) == 255)){
-      shoulderPos = shoulderPos-1;          
-      //Serial.println(shoulderPos, DEC);                  
+    if(pinSwichOn){
+      shoulerStepMove1 = 0;     
+    }else{
+      shoulerStepMove1 = 1;     
+      shoulerStepMove2 = 1;           
+    }
+    
+    if(!pinSwichOn || !shoulerStepMove2){      
+      shoulderPos = shoulderPos+1;          
+    }    
   }                      
 
   if((ps2x.Analog(PSS_RY) == 0)){
-      shoulderPos = shoulderPos+1;          
-      //Serial.println(shoulderPos, DEC);                  
+    if(pinSwichOn){
+      shoulerStepMove2 = 0;     
+    }else{
+      shoulerStepMove2 = 1;     
+      shoulerStepMove1 = 1;           
+    }
+    
+    if(!pinSwichOn || !shoulerStepMove1){            
+      shoulderPos = shoulderPos-1;          
+    }
   }      
       
   stepper2.moveTo(shoulderPos);
