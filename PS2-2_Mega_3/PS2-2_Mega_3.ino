@@ -332,12 +332,14 @@ void setup(){
     initMotors();
   }
 
-  //while(1){
+  while(1){
 
     // --------------------------------------
     // -------------- Sequence1 -------------
     // --------------------------------------
-    
+
+    Serial.println("Sequence1");
+        
     dx = 22;
     dy = 0.0;
     dz = -14.58;
@@ -436,7 +438,9 @@ void setup(){
     // --------------------------------------
     // -------------- Sequence2 -------------
     // --------------------------------------
-    
+
+    Serial.println("Sequence2");
+        
     dx = 24;
     dy = 0.0;
     dz = 13;
@@ -518,7 +522,9 @@ void setup(){
     // --------------------------------------
     // -------------- Sequence3 -------------
     // --------------------------------------
-    
+
+    Serial.println("Sequence3");
+        
     dx = 22;
     dy = 0.0;
     dz = -14.58;
@@ -601,7 +607,9 @@ void setup(){
     // --------------------------------------
     // -------------- Sequence4 -------------
     // --------------------------------------
-    
+
+    Serial.println("Sequence4");
+        
     // Close gripper
     
     delay(2000);
@@ -694,7 +702,9 @@ void setup(){
     // --------------------------------------
     // -------------- Sequence5 -------------
     // --------------------------------------
-    
+
+    Serial.println("Sequence5");
+        
     dx = 22;
     dy = 0.0;
     dz = -14.58;
@@ -779,11 +789,13 @@ void setup(){
     // --------------------------------------
     // -------------- Sequence6 -------------
     // --------------------------------------
+
+    Serial.println("Sequence6");
     
-    dx = 24;
+    dx = 31;
     dy = 0.0;
-    dz = 13;
-    dy2 = 10;
+    dz = 0;
+    dy2 = 0;
   
     // d = angle base
     // a = angle shoulder
@@ -829,20 +841,20 @@ void setup(){
     moveStepper = 1;
   
     while(moveStepper){
-      //stepper4.run();    
+      stepper4.run();    
       stepper2.run();     
       stepper3.run();    
       //stepper1.run();   // Base
   
       if(stepper2.distanceToGo()==0
          && stepper3.distanceToGo()==0 
-         //&& stepper4.distanceToGo()==0
+         && stepper4.distanceToGo()==0
          ){
         
         //stepper1.setCurrentPosition(0);    
         stepper2.setCurrentPosition(0);
         stepper3.setCurrentPosition(0);
-        //stepper4.setCurrentPosition(0);
+        stepper4.setCurrentPosition(0);
         moveStepper = 0;            
       }
     }
@@ -858,8 +870,7 @@ void setup(){
       }
     }
 
-      
-  //}
+  }
          
 }
 
