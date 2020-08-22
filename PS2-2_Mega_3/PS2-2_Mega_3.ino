@@ -366,7 +366,7 @@ void setup(){
     stepper1.setMaxSpeed(1500);         // Base
     stepper1.setAcceleration(1000);
     stepper4.setMaxSpeed(1500);         // Wrist
-    stepper4.setAcceleration(1000);
+    stepper4.setAcceleration(1200);
     stepper3.setMaxSpeed(1500);         // Elbow
     stepper3.setAcceleration(1000);
     stepper2.setMaxSpeed(1500);         // Shoulder
@@ -423,17 +423,17 @@ void setup(){
       }
     }
   
-    delay(2000);
+    delay(1000);
   
     // Close gripper  
-    servoPos = 45;
+    servoPos = 55;
   
     for(int i=0 ; i<servoPos; i++){
       myservo.write(i);
       delay(5);
     }                
   
-    delay(2000);
+    delay(1000);
   
     // --------------------------------------
     // -------------- Sequence2 -------------
@@ -471,7 +471,7 @@ void setup(){
     stepper1.setMaxSpeed(1500);         // Base
     stepper1.setAcceleration(1000);
     stepper4.setMaxSpeed(1500);         // Wrist
-    stepper4.setAcceleration(1000);
+    stepper4.setAcceleration(1200);
     stepper3.setMaxSpeed(1500);         // Elbow
     stepper3.setAcceleration(1000);
     stepper2.setMaxSpeed(1500);         // Shoulder
@@ -555,7 +555,7 @@ void setup(){
     stepper1.setMaxSpeed(1500);         // Base
     stepper1.setAcceleration(1000);
     stepper4.setMaxSpeed(1500);         // Wrist
-    stepper4.setAcceleration(1000);
+    stepper4.setAcceleration(1200);
     stepper3.setMaxSpeed(1500);         // Elbow
     stepper3.setAcceleration(1000);
     stepper2.setMaxSpeed(1500);         // Shoulder
@@ -593,34 +593,212 @@ void setup(){
       }
     }
   
-    delay(2000);
+    delay(1000);
     
     // Open gripper
     
     servoPos = 1;
   
-    for(int i=45 ; i>servoPos; i--){
+    for(int i=55 ; i>servoPos; i--){
       myservo.write(i);
       delay(5);
     }                
-  
+
+    delay(1000);
+    
     // --------------------------------------
     // -------------- Sequence4 -------------
     // --------------------------------------
 
     Serial.println("Sequence4");
+    
+    dx = 31;
+    dy = 0.0;
+    dz = 0;
+    dy2 = 0;
+  
+    // d = angle base
+    // a = angle shoulder
+    // b = angle elbow
+    // c = angle wrist
+  
+    inverseKinematics(dx,dy,dz);
+  
+    // Initialize angles @90 degrees = postion 0
+    d = round(rad2Deg(atan2(dx,dy2)));
+    a = round(rad2Deg(a));
+    b = round(rad2Deg(b));
+    c = round(rad2Deg(c));
+  
+    angle[1].a = a;
+    angle[1].b = b;
+    angle[1].c = c;
+    angle[1].d = d;
+  
+    a -= angle[0].a;
+    b -= angle[0].b;
+    c -= angle[0].c;
+    
+    stepper1.setMaxSpeed(1500);         // Base
+    stepper1.setAcceleration(1000);
+    stepper4.setMaxSpeed(1500);         // Wrist
+    stepper4.setAcceleration(1200);
+    stepper3.setMaxSpeed(1500);         // Elbow
+    stepper3.setAcceleration(1000);
+    stepper2.setMaxSpeed(1500);         // Shoulder
+    stepper2.setAcceleration(1000);
+  
+    targetPosBase = (d*1200/90);
+    targetPosShoulder = (a*1200/90);
+    targetPosElbow = (b*1200/90);
+    targetPosWrist = (c*1200/90);
+  
+    stepper4.moveTo(-targetPosWrist);
+    stepper2.moveTo(-targetPosShoulder);
+    stepper3.moveTo(targetPosElbow);
+    stepper1.moveTo(targetPosBase);
+  
+    moveStepper = 1;
+  
+    while(moveStepper){
+      stepper4.run();    
+      stepper2.run();     
+      stepper3.run();    
+      //stepper1.run();   // Base
+  
+      if(stepper2.distanceToGo()==0
+         && stepper3.distanceToGo()==0 
+         && stepper4.distanceToGo()==0
+         ){
         
-    // Close gripper
+        //stepper1.setCurrentPosition(0);    
+        stepper2.setCurrentPosition(0);
+        stepper3.setCurrentPosition(0);
+        stepper4.setCurrentPosition(0);
+        moveStepper = 0;            
+      }
+    }
+  
+    moveStepper = 1;
+  
+    while(moveStepper){
+      stepper4.run();    
+  
+      if(stepper4.distanceToGo()==0){
+        stepper4.setCurrentPosition(0);
+        moveStepper = 0;            
+      }
+    }
+
+    delay(1000);
     
-    delay(2000);
+    // --------------------------------------
+    // -------------- Sequence5 -------------
+    // --------------------------------------
+
+    Serial.println("Sequence5");
+        
+    dx = 22;
+    dy = 0.0;
+    dz = -14.58;
+    dy2 = 0;
+  
+    // a = angle shoulder
+    // b = angle elbow
+    // c = angle wrist
+    // d = angle base
+  
+    inverseKinematics(dx,dy,dz);
+  
+    // Initialize angles @90 degrees = postion 0
+    d = round(rad2Deg(atan2(dx,dy2)));
+    a = round(rad2Deg(a));
+    b = round(rad2Deg(b));
+    c = round(rad2Deg(c));
+  
+    angle[0].a = a;
+    angle[0].b = b;
+    angle[0].c = c;
+    angle[0].d = d;
+          
+    stepper1.setMaxSpeed(1500);         // Base
+    stepper1.setAcceleration(1000);
+    stepper4.setMaxSpeed(1500);         // Wrist
+    stepper4.setAcceleration(1200);
+    stepper3.setMaxSpeed(1500);         // Elbow
+    stepper3.setAcceleration(1000);
+    stepper2.setMaxSpeed(1500);         // Shoulder
+    stepper2.setAcceleration(1000);
+  
+    targetPosBase = 0;
+    targetPosShoulder = 0;
+    targetPosElbow = 0;
+    targetPosWrist = 0;
+        
+    targetPosBase = (d*1200/90);
+    targetPosShoulder = (a*1200/90);
+    targetPosElbow = ((180-b)*1200/90);
+    targetPosWrist = ((c-180)*1200/90);
     
-    servoPos = 45;
+    stepper4.moveTo(-targetPosWrist);
+    stepper2.moveTo(-targetPosShoulder);
+    stepper3.moveTo(-targetPosElbow);
+    stepper1.moveTo(targetPosBase);
+  
+    // -------- First wrist ---------
+    
+    moveStepper = 1;
+  
+    while(moveStepper){
+      stepper4.run();    
+  
+      if(stepper4.distanceToGo()==0){      
+        stepper4.setCurrentPosition(0);
+        moveStepper = 0;     
+      }
+    }
+  
+    // -------- Shoulder + Elbow ---------
+    
+    moveStepper = 1;
+  
+    while(moveStepper){
+      stepper4.run();    
+      stepper2.run();     
+      stepper3.run();    
+      //stepper1.run();   // Base
+  
+      if(stepper2.distanceToGo()==0
+         && stepper3.distanceToGo()==0 
+         && stepper4.distanceToGo()==0
+         ){
+        
+        //stepper1.setCurrentPosition(0);    
+        stepper2.setCurrentPosition(0);
+        stepper3.setCurrentPosition(0);
+        stepper4.setCurrentPosition(0);
+        moveStepper = 0;     
+      }
+    }
+  
+    delay(1000);
+  
+    // Close gripper  
+    servoPos = 55;
   
     for(int i=0 ; i<servoPos; i++){
       myservo.write(i);
       delay(5);
     }                
   
+    delay(1000);
+  
+    // --------------------------------------
+    // -------------- Sequence6-------------
+    // --------------------------------------
+
+    Serial.println("Sequence6");
+        
     dx = 24;
     dy = 0.0;
     dz = 13;
@@ -651,7 +829,7 @@ void setup(){
     stepper1.setMaxSpeed(1500);         // Base
     stepper1.setAcceleration(1000);
     stepper4.setMaxSpeed(1500);         // Wrist
-    stepper4.setAcceleration(1000);
+    stepper4.setAcceleration(1200);
     stepper3.setMaxSpeed(1500);         // Elbow
     stepper3.setAcceleration(1000);
     stepper2.setMaxSpeed(1500);         // Shoulder
@@ -698,12 +876,13 @@ void setup(){
         moveStepper = 0;            
       }
     }
-  
+
+
     // --------------------------------------
-    // -------------- Sequence5 -------------
+    // -------------- Sequence7 -------------
     // --------------------------------------
 
-    Serial.println("Sequence5");
+    Serial.println("Sequence7");
         
     dx = 22;
     dy = 0.0;
@@ -735,7 +914,7 @@ void setup(){
     stepper1.setMaxSpeed(1500);         // Base
     stepper1.setAcceleration(1000);
     stepper4.setMaxSpeed(1500);         // Wrist
-    stepper4.setAcceleration(1000);
+    stepper4.setAcceleration(1200);
     stepper3.setMaxSpeed(1500);         // Elbow
     stepper3.setAcceleration(1000);
     stepper2.setMaxSpeed(1500);         // Shoulder
@@ -773,24 +952,24 @@ void setup(){
       }
     }
   
-    delay(2000);
+    delay(1000);
     
     // Open gripper
     
     servoPos = 1;
   
-    for(int i=45 ; i>servoPos; i--){
+    for(int i=55 ; i>servoPos; i--){
       myservo.write(i);
       delay(5);
     }    
 
-    delay(2000);
+    delay(1000);
     
     // --------------------------------------
-    // -------------- Sequence6 -------------
+    // -------------- Sequence8 -------------
     // --------------------------------------
 
-    Serial.println("Sequence6");
+    Serial.println("Sequence8");
     
     dx = 31;
     dy = 0.0;
@@ -822,7 +1001,7 @@ void setup(){
     stepper1.setMaxSpeed(1500);         // Base
     stepper1.setAcceleration(1000);
     stepper4.setMaxSpeed(1500);         // Wrist
-    stepper4.setAcceleration(1000);
+    stepper4.setAcceleration(1200);
     stepper3.setMaxSpeed(1500);         // Elbow
     stepper3.setAcceleration(1000);
     stepper2.setMaxSpeed(1500);         // Shoulder
@@ -1257,8 +1436,8 @@ void initMotors(){
   
   if(homingBase && !homingWrist){
 
-    stepper4.setMaxSpeed(1000);
-    stepper4.setAcceleration(1000);
+    stepper4.setMaxSpeed(1500);
+    stepper4.setAcceleration(1200);
   
     while(digitalRead(pinSwich)){
         stepper4.moveTo(pos);
@@ -1268,8 +1447,8 @@ void initMotors(){
     }
   
     stepper4.setCurrentPosition(0); 
-    stepper4.setMaxSpeed(1000);
-    stepper4.setAcceleration(500);
+    stepper4.setMaxSpeed(1500);
+    stepper4.setAcceleration(1200);
     stepper4.moveTo(endPositionWrist);
     stepper4.runToPosition();
     stepper4.setCurrentPosition(0); 
