@@ -139,24 +139,6 @@ char *token;
 
 #define pinSwich 43  // switsh
 
-//#define shoulderSwich1 43  // switsh3
-//#define shoulderSwich2 43  // switsh4
-//#define elbowSwich1 43  // switsh5
-//#define elbowSwich2 43  // switsh6
-//#define wristSwich1 43  // switsh7
-//#define wristSwich2 43  // switsh8
-//#define baseSwich1 43   // switch1
-//#define baseSwich2 43   // switch2
-
-//#define shoulderSwich1 36  // switsh3
-//#define shoulderSwich2 37  // switsh4
-//#define elbowSwich1 40  // switsh5
-//#define elbowSwich2 38  // switsh6
-//#define wristSwich1 39  // switsh7
-//#define wristSwich2 41  // switsh8
-//#define baseSwich1 42   // switch1
-//#define baseSwich2 43   // switch2
-
 // --- Limit positions ---
 int pinSwichOn;
 
