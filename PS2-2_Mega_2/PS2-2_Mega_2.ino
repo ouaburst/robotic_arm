@@ -243,10 +243,10 @@ void setup(){
   homingDone = 0;
  
   // ------ Stepper motor speed -------
-  # define STEP_MOTOR_SPEED_BASE 10
-  # define STEP_MOTOR_SPEED_SHOULDER 10
-  # define STEP_MOTOR_SPEED_ELBOW 10
-  # define STEP_MOTOR_SPEED_WRIST 10
+  # define STEP_MOTOR_SPEED_BASE 30
+  # define STEP_MOTOR_SPEED_SHOULDER 30
+  # define STEP_MOTOR_SPEED_ELBOW 30
+  # define STEP_MOTOR_SPEED_WRIST 30
 
   // ------ Limit values -------
   stopBasePos1 = 0;
@@ -282,6 +282,8 @@ void setup(){
 
   stepperSteps = 0;
   DisplayData = 0;
+
+  homingDone = 1;
   
   while(!homingDone){
     initMotors();
@@ -525,15 +527,15 @@ void loop() {
   
   if(!stopWristPos2){
     if((ps2x.Analog(PSS_LY) == 255)){                      
-        wristPos = wristPos+10;          
-        Serial.println(wristPos, DEC);                  
+        wristPos = wristPos+30;          
+        //Serial.println(wristPos, DEC);                  
     }                      
   }
 
   if(!stopWristPos1){
     if((ps2x.Analog(PSS_LY) == 0)){
-        wristPos = wristPos-10;          
-        Serial.println(wristPos, DEC);                  
+        wristPos = wristPos-30;          
+        //Serial.println(wristPos, DEC);                  
     }      
   }
   
@@ -549,15 +551,15 @@ void loop() {
   
   if(!stopElbowPos2){
     if((ps2x.Analog(PSS_LX) == 255)){                      
-        elbowPos = elbowPos-10;          
-        Serial.println(elbowPos, DEC);                  
+        elbowPos = elbowPos-30;          
+        //Serial.println(elbowPos, DEC);                  
     }                      
   }
 
   if(!stopElbowPos1){
     if((ps2x.Analog(PSS_LX) == 0)){
-        elbowPos = elbowPos+10;          
-        Serial.println(elbowPos, DEC);                  
+        elbowPos = elbowPos+30;          
+        //Serial.println(elbowPos, DEC);                  
     }      
   }
       
@@ -573,15 +575,15 @@ void loop() {
   
   if(!stopShoulderPos2){
     if((ps2x.Analog(PSS_RY) == 255)){                      
-        shoulderPos = shoulderPos-10;          
-        Serial.println(shoulderPos, DEC);                  
+        shoulderPos = shoulderPos-30;          
+        //Serial.println(shoulderPos, DEC);                  
     }                      
   }
 
   if(!stopShoulderPos1){
     if((ps2x.Analog(PSS_RY) == 0)){
-        shoulderPos = shoulderPos+10;          
-        Serial.println(shoulderPos, DEC);                  
+        shoulderPos = shoulderPos+30;          
+        //Serial.println(shoulderPos, DEC);                  
     }      
   }
       
