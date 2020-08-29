@@ -1,34 +1,47 @@
+/* Example sketch to control a stepper motor with TB6600 stepper motor driver, AccelStepper library and Arduino: acceleration and deceleration. More info: https://www.makerguides.com */
+
+// Include the AccelStepper library:
 #include <AccelStepper.h>
 
-// Define a stepper and the pins it will use
-AccelStepper stepper(AccelStepper::DRIVER, 7, 6);
+// Define stepper motor connections and motor interface type. Motor interface type must be set to 1 when using a driver:
+#define dirPin 2
+#define stepPin 3
+#define motorInterfaceType 1
 
-int pos;
-int start;
-int i;
+// Create a new instance of the AccelStepper class:
+AccelStepper stepper = AccelStepper(motorInterfaceType, stepPin, dirPin);
 
-void setup()
-{  
-  stepper.setMaxSpeed(5000);
-  stepper.setAcceleration(5000);
+int homingDone = 0;
 
-  
-  start=1;
-  pos=0;
-  i=0;
+void setup() {
+  // Set the maximum speed and acceleration:
+  stepper.setMaxSpeed(1000);
+  stepper.setAcceleration(500);
+
+  while(!homingDone){
+    initMotors();
+  }
+
 }
 
-void loop()
-{
-  while(i <50){
+void loop() {
 
-    pos = pos+10;
-    stepper.moveTo(pos);
+}
 
-    while (stepper.distanceToGo() !=0) {
-      stepper.runSpeedToPosition();
-    }
+void initMotors(){
 
-    i++;
-  }
+  // Set the target position:
+  stepper.moveTo(-4000);
+  // Run to target position with set speed and acceleration/deceleration:
+  stepper.runToPosition();
+
+  delay(1000);
+
+  // Move back to zero:
+  stepper.moveTo(0);
+  stepper.runToPosition();
+
+  delay(1000);
+
+  homingDone = 1;
 }
