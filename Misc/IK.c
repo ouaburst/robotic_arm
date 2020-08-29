@@ -65,14 +65,14 @@ int main()
     float R,S,Q,f,g;
 
     h = 23.5;    // height cm
-    L = 5;     // shoulder cm
-    M = 8.5;     // elbow cm
-    N = 17.0;    // wrist cm
+    L = 5.5;     // shoulder cm
+    M = 11;     // elbow cm
+    N = 14.5;    // wrist cm
 
     // Global EE coordinates
-    dx = 25.05;
+    dx = 31.0;
     dy = 0.0;
-    dz = 10;
+    dz = 0.0;
 
     R = sqrt(pow(dx,2) + pow(dy,2));  // The radius from the axis of rotation of the base to dx,dy
     S = R - N;                  // 
