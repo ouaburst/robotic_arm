@@ -452,8 +452,8 @@ void setup(){
     
     stepper1.setMaxSpeed(2500);         // Base
     stepper1.setAcceleration(1500);
-    stepper4.setMaxSpeed(700);         // Wrist
-    stepper4.setAcceleration(500);
+    stepper4.setMaxSpeed(500);         // Wrist
+    stepper4.setAcceleration(300);
     stepper3.setMaxSpeed(2500);         // Elbow
     stepper3.setAcceleration(1500);
     stepper2.setMaxSpeed(2500);         // Shoulder
