@@ -351,7 +351,7 @@ void setup(){
     stepper4.setAcceleration(1500);
     stepper3.setMaxSpeed(700);         // Elbow
     stepper3.setAcceleration(500);
-    stepper2.setMaxSpeed(700);         // Shoulder
+    stepper2.setMaxSpeed(700);         //  Shoulder
     stepper2.setAcceleration(500);
   
     targetPosBase = 0;
