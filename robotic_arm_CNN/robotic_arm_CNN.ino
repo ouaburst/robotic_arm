@@ -3,6 +3,24 @@
 #include <AccelStepper.h>
 //#include "PinChangeInterrupt.h"
 
+/* 
+ * Arduino code to send and receive I2C data
+ * Tested on Adafruit Feather M0+ Express and Raspberry Pi Model 4
+ * 
+ * SDA <--> SDA
+ * SCL <--> SCL
+ * GND <--> GND
+ * 
+ * Sets built-in LED (1 = on, 0 = off) on Feather when requested 
+ * and responds with data received
+ */
+
+#include <Wire.h>
+#define SLAVE_ADDRESS 0x04       // I2C address for Arduino
+int i2cData = 0;                 // the I2C data received
+
+
+
 #define deg2Rad(angleInDegrees) ((angleInDegrees) * M_PI / 180.0)
 #define rad2Deg(angleInRadians) ((angleInRadians) * 180.0 / M_PI)
 
@@ -319,7 +337,7 @@ void setup(){
   // 1 = turnLeft
   // 2 = turnRight
   
-  startSequence(1);
+  //startSequence(1);
 
 }
 
@@ -628,37 +646,17 @@ void loop() {
   // -----------------------------------------------
       
     if(ps2x.ButtonPressed(PSB_CIRCLE)){
-      DisplayData = 1;      
+      
+        // 1 = turnLeft
+        // 2 = turnRight
+  
+        startSequence(2);
+
+
+      
+      //DisplayData = 1;      
     }       
 
-  if(DisplayData){
-
-     Serial.println("++++++++++++ Display Data ++++++++++++++++");
-
-      Serial.print("pinSwichOn: ");                  
-      Serial.println(pinSwichOn,DEC);                  
-      Serial.print("baseStepMove1: ");                  
-      Serial.println(baseStepMove1,DEC);      
-      Serial.print("pinSwichOn: ");                  
-      Serial.println(pinSwichOn,DEC);                  
-      Serial.print("baseStepMove2: ");                  
-      Serial.println(baseStepMove2,DEC);                  
-      Serial.println(basePos,DEC);                  
-                  
-      Serial.println(basePos,DEC);                  
-
-//    for(int i=1; i<posIndex+1 ; i++){
-//
-//      Serial.println(motor[i].number,DEC);
-//      Serial.println(motor[i].speed,DEC);
-//      Serial.println(motor[i].type,DEC);
-//      Serial.println(motor[i].steps,DEC);
-//      Serial.println(motor[i].dir,DEC);
-//      Serial.println("-------------------");
-//    }
-//
-    DisplayData = 0;
-  }
 
 
 //----------------------------------------   
@@ -796,6 +794,19 @@ void initMotors(){
       delay(5);                                    
     }        
     homingDone = 1;
+  }
+}
+
+// ------------------------------------------------
+// Handle reception of incoming I2C data
+// ------------------------------------------------
+
+void receiveData(int byteCount) {
+  while (Wire.available()) {
+    i2cData = Wire.read();
+
+    Serial.print("Recived: ");   
+    Serial.println(i2cData);       
   }
 }
 
