@@ -17,9 +17,10 @@
 
 #include <Wire.h>
 #define SLAVE_ADDRESS 0x04       // I2C address for Arduino
-int i2cData = 0;                 // the I2C data received
-
-
+int i2cData;                     // the I2C data received
+int sequenceState;               // 1 = sequence is running, 
+                                 // 0 = sequence is not running
+// -------------------------------------------
 
 #define deg2Rad(angleInDegrees) ((angleInDegrees) * M_PI / 180.0)
 #define rad2Deg(angleInRadians) ((angleInRadians) * 180.0 / M_PI)
@@ -255,6 +256,14 @@ void setup(){
       break;
    }
 
+  // ---------- IC2 -----------
+
+  Wire.begin(SLAVE_ADDRESS);
+  Wire.onReceive(receiveData);
+  Wire.onRequest(sendData);
+  i2cData = 0;
+  sequenceState = 0;
+
   //--------------------------------------------
   
   Serial.begin(19200);
@@ -333,11 +342,6 @@ void setup(){
   while(!homingDone){
     initMotors();
   }
-
-  // 1 = turnLeft
-  // 2 = turnRight
-  
-  //startSequence(1);
 
 }
 
@@ -645,19 +649,17 @@ void loop() {
   // ------ Press button for playing sample --------
   // -----------------------------------------------
       
-    if(ps2x.ButtonPressed(PSB_CIRCLE)){
-      
-        // 1 = turnLeft
-        // 2 = turnRight
-  
-        startSequence(2);
+  if(ps2x.ButtonPressed(PSB_CIRCLE)){
 
+    // 1 = turnLeft
+    // 2 = turnRight
+    
+    if(i2cData == 1)
+      startSequence(1);
 
-      
-      //DisplayData = 1;      
-    }       
-
-
+    if(i2cData == 2)
+      startSequence(2);
+  }       
 
 //----------------------------------------   
 
@@ -808,6 +810,15 @@ void receiveData(int byteCount) {
     Serial.print("Recived: ");   
     Serial.println(i2cData);       
   }
+}
+
+// ------------------------------------------------
+// Handle request to send I2C data
+// ------------------------------------------------
+
+void sendData() { 
+  //Wire.write(sequenceState);
+  Wire.write(0);
 }
 
 // ------------------------------------------------
