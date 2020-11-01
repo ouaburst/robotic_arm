@@ -15,8 +15,8 @@ int homingDone = 0;
 
 void setup() {
   // Set the maximum speed and acceleration:
-  stepper.setMaxSpeed(1000);
-  stepper.setAcceleration(500);
+  stepper.setMaxSpeed(2500);
+  stepper.setAcceleration(1000);
 
   while(!homingDone){
     initMotors();
@@ -43,5 +43,5 @@ void initMotors(){
 
   delay(1000);
 
-  homingDone = 1;
+  //homingDone = 1;
 }

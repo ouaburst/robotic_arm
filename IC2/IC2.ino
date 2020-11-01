@@ -16,6 +16,7 @@
 int i2cData = 0;                 // the I2C data received
 
 char rx_byte = 0;
+int sendValue;
 
 void setup(){
   Serial.begin(19200);
@@ -30,8 +31,10 @@ void loop() {
     rx_byte = Serial.read();    
 
     if ((rx_byte >= '0') && (rx_byte <= '9')) {
-      Serial.print("Number received: ");
+      Serial.print("Number sended: ");
       Serial.println(rx_byte);
+      sendValue = rx_byte;
+      
     }
   }
 }
@@ -46,5 +49,5 @@ void receiveData(int byteCount) {
 }
 // Handle request to send I2C data
 void sendData() { 
-  Wire.write(3);
+  Wire.write(sendValue);
 }
