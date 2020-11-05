@@ -1,8 +1,16 @@
+/*
+ * MIT License
+ * Copyright (c) 2020 Oualid Burstrom
+ */
+
+/*
+ * Headers
+ */
+ 
 #include <PS2X_lib.h>  //for v1.6
 #include <Servo.h>
 #include <AccelStepper.h>
-//#include "PinChangeInterrupt.h"
-
+#include <Wire.h>
 /* 
  * Arduino code to send and receive I2C data
  * Tested on Adafruit Feather M0+ Express and Raspberry Pi Model 4
@@ -15,18 +23,13 @@
  * and responds with data received
  */
 
-#include <Wire.h>
 #define SLAVE_ADDRESS 0x04       // I2C address for Arduino
 int i2cData;                     // the I2C data received
 int sequenceState;               // 1 = sequence is running, 
                                  // 0 = sequence is not running
-// -------------------------------------------
-
-#define deg2Rad(angleInDegrees) ((angleInDegrees) * M_PI / 180.0)
-#define rad2Deg(angleInRadians) ((angleInRadians) * 180.0 / M_PI)
 
 /******************************************************************
- * set pins connected to PS2 controller:
+ * Set pins connected to PS2 controller:
  *   - 1e column: original 
  *   - 2e colmun: Stef?
  * replace pin numbers by the ones you use
@@ -42,61 +45,110 @@ int sequenceState;               // 1 = sequence is running,
  *   - rumble    = motor rumbling
  * uncomment 1 of the lines for each mode selection
  ******************************************************************/
-//#define pressures   true
 #define pressures   false
-//#define rumble      true
 #define rumble      false
 
-PS2X ps2x; // create PS2 Controller Class
+/*
+ * Right now, the library does NOT support hot pluggable controllers, meaning 
+ * you must always either restart your Arduino after you connect the controller, 
+ * or call config_gamepad(pins) again after connecting the controller.
+ */
 
-//right now, the library does NOT support hot pluggable controllers, meaning 
-//you must always either restart your Arduino after you connect the controller, 
-//or call config_gamepad(pins) again after connecting the controller.
+/*
+ * Create PS2 Controller Class
+ */
+
+PS2X ps2x; 
 
 int error = 0;
 byte type = 0;
 byte vibrate = 0;
+
+/*
+ * Initiate stepper mortors using AccelStepper
+ */
 
 AccelStepper stepper1(AccelStepper::DRIVER, 7, 6);    // Base
 AccelStepper stepper2(AccelStepper::DRIVER, 9, 8);    // Shoulder
 AccelStepper stepper3(AccelStepper::DRIVER, 5, 4);    // Elbow
 AccelStepper stepper4(AccelStepper::DRIVER, 3, 2);    // Wrist
 
+/*
+ * Global variables for stepper motors pos
+ */
+
 int basePos;
 int wristPos;
 int elbowPos;
 int shoulderPos;
 
-// ------ Robot geometry ------
+/*
+ * Inverse kinematics parameters
+ */
 
-#define h 23.5  // Height cm
+/*
+ * Inverse Kinematics
+ */
+
+#define deg2Rad(angleInDegrees) ((angleInDegrees) * M_PI / 180.0)
+#define rad2Deg(angleInRadians) ((angleInRadians) * 180.0 / M_PI)
+
+/*
+ * Robot geometry in cm used in Inverse Kinematics
+ */
+
+#define h 23.5    // Height
 #define L 5.5     // Shoulder
-#define M 11   // Elbow
-#define N 14.5  // Wrist
+#define M 11      // Elbow
+#define N 14.5    // Wrist
 
-// ----- IK angles -----
-// d = angle base
-// a = angle shoulder
-// b = angle elbow
-// c = angle wrist
-
+/* IK angles
+ * d = angle base
+ * a = angle shoulder
+ * b = angle elbow
+ * c = angle wrist
+ */
+ 
 float a, b, c, d;   // Joint variables that will be calculated
 
-// EE position
+/*
+ * End Effector position
+ */
+ 
 float dx, dy, dz, dy2;
 
-// ------ servos --------
+/*
+ * An array of a struct to store the angles in IK. 
+ * a = angle shoulder
+ * b = angle elbow
+ * c = angle wrist
+ * d = angle base
+ * 
+ */
+ 
+typedef struct {
+   float a;
+   float b;
+   float c;
+   float d;
+} Angles[10];
+
+Angles angle;
+
+/*
+ * Servos
+ */
 
 # define SERVO_PIN 44
 # define SERVO_PIN2 45
 
 # define MIN_GRIPPER_POS 0
 # define MAX_GRIPPER_POS 145
-# define MIN_WRSIT_POS 0
-# define MAX_WRIST_POS 170
+# define MIN_WRSIT_POS 0    // Not used!
+# define MAX_WRIST_POS 170  // Not used!
 #define SERVO_MOTOR 2
 #define DIR1 1      // servo pos ++
-#define DIR2 2      // servo pos --
+#define DIR2 2      // servo pos --, not used
 
 Servo myservo;
 Servo myservo2;
@@ -109,12 +161,19 @@ int wristServoRotateDir1;
 int wristServoRotateDir2;
 int servoSteps;
 
-// ----------------------
+/*
+ * Global variables
+ */
+ 
 #define HOMING_ACTION 1   
 #define PLAY_ACTION 2   
 #define STEP_MOTOR 1
 
-// --------- Struct -----------
+/*
+ * This struct is used to store the positions of the
+ * stepper motors and servo motors.
+ * It is used when creating sequences.
+ */
 
 typedef struct {
    int number;
@@ -126,48 +185,50 @@ typedef struct {
 
 Motors motor;
 
+/*
+ * Serial comm
+ * Struct to store serial information from Arduino.
+ */
+ 
 typedef struct {
   char bufferArray[22];
 } SerialBuffers[50];
 
 SerialBuffers serialBuffer;
-
-// a = angle shoulder
-// b = angle elbow
-// c = angle wrist
-// d = angle base
-
-typedef struct {
-   float a;
-   float b;
-   float c;
-   float d;
-} Angles[10];
-
-Angles angle;
-
-
-// ---- Serial ----
 String serialData;
 char char_array[256];
 char *token;
 
-// --- Switches ---
-// Move all the switch to one port
-// Move to switch 43
-
+/*
+ * Switches
+ * Are used by stepper motors: 
+ * For homing
+ * To prevent exceed the limits 
+ * 
+ * All switches are connected to pin 43 
+ */
+ 
 #define pinSwich 43  // switsh
 
-// --- Limit positions ---
+/*
+ * State of pin 43 
+ */
+ 
 int pinSwichOn;
 
-// ------ Stepper motor speed -------
+/*
+ * Define stepper motor speed 
+ */
+ 
 # define STEP_MOTOR_SPEED_BASE 400
 # define STEP_MOTOR_SPEED_SHOULDER 400
 # define STEP_MOTOR_SPEED_ELBOW 400
 # define STEP_MOTOR_SPEED_WRIST 400
 
-// --- Misc ---
+/*
+ * Misc 
+ */
+ 
 int buzzer; 
 int homingDone;
 
@@ -206,10 +267,16 @@ int targetPosShoulder;
 int targetPosElbow;
 int targetPosWrist;
 
-//int turnLeft, turnRight;
-
+/*
+ * Setup function used to initialize things...
+ */
+ 
 void setup(){  
-  //------------ PS2 ---------------   
+  
+  /*
+   *  PS2 controller 
+   */
+   
   //setup pins and settings: GamePad(clock, command, attention, data, Pressures?, Rumble?) check for error
   error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble);
   
@@ -256,7 +323,9 @@ void setup(){
       break;
    }
 
-  // ---------- IC2 -----------
+  /*
+   *  IC2 
+   */
 
   Wire.begin(SLAVE_ADDRESS);
   Wire.onReceive(receiveData);
@@ -264,13 +333,18 @@ void setup(){
   i2cData = 0;
   sequenceState = 0;
 
-  //--------------------------------------------
+  /*
+   * Serial
+   */
   
   Serial.begin(19200);
   
-  // ------ servo motors -------
+  /*
+   * Servos
+   */
+  
   pinMode(SERVO_PIN, OUTPUT);
-  pinMode(SERVO_PIN2, OUTPUT);
+  pinMode(SERVO_PIN2, OUTPUT);  // Not used!
   myservo.attach(SERVO_PIN);
   //myservo2.attach(SERVO_PIN2);
 
@@ -281,26 +355,35 @@ void setup(){
   wristServoRotateDir1 = 0;
   wristServoRotateDir2 = 0;
 
-  // ------ Step motors positions ------
+  /*
+   * Stepper motors positions
+   */
+   
   basePos = 0;
   wristPos = 0;
   elbowPos = 0;
   posIndex = 0;
   
-  // ------ Switch pins ---------
+  /*
+   * Switch pin
+   */
+   
   pinMode(pinSwich, INPUT_PULLUP); 
 
-  //attachPCINT(digitalPinToPCINT(wristSwich2), homeWrist, CHANGE);
+  /*
+   * Misc
+   */
   
-  // ------ Misc ---------
   buzzer = 31; 
   pinMode(buzzer, OUTPUT); 
   noTone(buzzer); 
   homingDone = 0;
   
-  // ------ Limit values -------
+  /*
+   * Limit values
+   */
+   
   pinSwichOn = 0;
-
   baseStepMove1 = 1;
   baseStepMove2 = 1;
   shoulerStepMove1 = 1;
@@ -310,13 +393,19 @@ void setup(){
   wristStepMove1 = 1;
   wristStepMove2 = 1;
 
-  // ---------- For homing ----------------
+  /*
+   * For homing
+   */
+
   endPositionBase = 1200;
   endPositionWrist = 1200;
   endPositionElbow = 1200;
   endPositionShoulder = 1200;
 
-  // --------- Stepper directions -----------
+  /*
+   * Stepper motor directions
+   */
+
   shoulderDir1 = 0;
   shoulderDir2 = 0;
   elbowDir1 = 0;
@@ -335,7 +424,9 @@ void setup(){
   stepperSteps = 0;
   DisplayData = 0;
 
-  // -------- Homing -------  
+  /*
+   * Homing
+   */
 
   //homingDone = 1;
   
@@ -349,11 +440,11 @@ void loop() {
  
   if(error == 1) //skip loop if no controller found
     return; 
-    
-  // ------------------------------
-  // ----------- Limits -----------
-  // ------------------------------
 
+  /*
+   * Limits
+   */
+   
   if(!digitalRead(pinSwich)){
     //Serial.println("pinSwich ON");
     pinSwichOn = 1;
@@ -362,23 +453,13 @@ void loop() {
     pinSwichOn = 0;
     noTone(buzzer); 
   }
-  
-  // --------------------------------------------
-  // ------------- Servo1 gripper ---------------
-  // --------------------------------------------
+
+  /*
+   * Servo1
+   */
   
   if(ps2x.Button(PSB_PAD_RIGHT)){               
     if(servoPos > MIN_GRIPPER_POS){        
-      if(!gripperServoRotateDir1){
-        posIndex++;
-        motor[posIndex].number = 5;          
-        motor[posIndex].speed = 5;    
-        motor[posIndex].type = SERVO_MOTOR;   
-        motor[posIndex].dir = DIR2;   
-        gripperServoRotateDir1 = 1;
-        gripperServoRotateDir2 = 0;
-        servoSteps = 0;
-      }        
       servoPos -= 1;
       servoSteps++;
       motor[posIndex].steps = servoSteps;                     
@@ -389,16 +470,6 @@ void loop() {
   
   if(ps2x.Button(PSB_PAD_LEFT)){     
     if(servoPos < MAX_GRIPPER_POS){
-      if(!gripperServoRotateDir2){
-        posIndex++;
-        motor[posIndex].number = 5;          
-        motor[posIndex].speed = 5;    
-        motor[posIndex].type = SERVO_MOTOR; 
-        motor[posIndex].dir = DIR1;               
-        gripperServoRotateDir2 = 1;
-        gripperServoRotateDir1 = 0;
-        servoSteps = 0;
-      }
       servoPos += 1;
       servoSteps++;
       motor[posIndex].steps = servoSteps;     
@@ -407,97 +478,14 @@ void loop() {
     }
   }
 
-  // ---------------------------------------------------
-  // ------------- Servo2 wrist rotation ---------------
-  // ---------------------------------------------------
-  
-  if(ps2x.Button(PSB_PAD_UP)) {      
-    if(servoPos2 > MIN_WRSIT_POS){
-      if(!wristServoRotateDir1){
-        posIndex++;
-        motor[posIndex].number = 6;          
-        motor[posIndex].speed = 5;    
-        motor[posIndex].type = SERVO_MOTOR;  
-        motor[posIndex].dir = DIR2;              
-        wristServoRotateDir1 = 1;
-        wristServoRotateDir2 = 0;
-        servoSteps = 0;
-      }        
-      servoPos2 -= 1;
-      servoSteps++;
-      motor[posIndex].steps = servoSteps;     
-      myservo2.write(servoPos2);
-      delay(5);  
-    }
-  }
-  
-  if(ps2x.Button(PSB_PAD_DOWN)){
-    if(servoPos2 < MAX_WRIST_POS){
-      if(!wristServoRotateDir2){
-        posIndex++;
-        motor[posIndex].number = 6;          
-        motor[posIndex].speed = 5;    
-        motor[posIndex].type = SERVO_MOTOR;   
-        motor[posIndex].dir = DIR1;             
-        wristServoRotateDir2 = 1;
-        wristServoRotateDir1 = 0;
-        servoSteps = 0;
-      }        
-      servoPos2 += 1;
-      servoSteps++;
-      motor[posIndex].steps = servoSteps;   
-      myservo2.write(servoPos2);
-      delay(5); 
-    }
-  }   
-  
-  //-----------------------------------------------------------
-  // ------ Move stepper motor#1 Base with PS2 joystick -------
-  //-----------------------------------------------------------
-  
-//  if(!stopBasePos2){
-//    if((ps2x.Analog(PSS_RX) == 255)){  
-//      if(baseDir1==0){
-//        baseDir1=1;
-//        posIndex++;
-//        motor[posIndex].number = 1;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
-//        motor[posIndex].type = STEP_MOTOR;   
-//        stepperSteps = 0;
-//
-//        Serial.print("--> Posindex: ");           
-//        Serial.println(posIndex, DEC);                   
-//      }
-//      if(baseDir2==1){
-//        baseDir2=0;
-//      }                          
-//      basePos = basePos+1;          
-//      motor[posIndex].steps = basePos; 
-//      Serial.println(basePos, DEC);                  
-//    }                      
-//  }
+  /*
+   * Move stepper motor#1 = Base
+   * with PS2 joystick
+   */
 
-//  if(!stopBasePos1){
-//    if((ps2x.Analog(PSS_RX) == 0)){
-//      if(baseDir2==0){
-//        baseDir2=1;
-//        posIndex++;
-//        motor[posIndex].number = 1;          
-//        motor[posIndex].speed = STEP_MOTOR_SPEED_BASE;    
-//        motor[posIndex].type = STEP_MOTOR;  
-//
-//        Serial.print("--> Posindex: ");           
-//        Serial.println(posIndex, DEC);           
-//         
-//      }
-//      if(baseDir1==1){
-//        baseDir1=0;
-//      }                          
-//      basePos = basePos-1;  
-//      motor[posIndex].steps = basePos;               
-//      Serial.println(basePos, DEC);                  
-//    }      
-//  }
+  /*
+   * PPS_RX
+   */
 
   if((ps2x.Analog(PSS_RX) == 255)){  
     
@@ -527,17 +515,26 @@ void loop() {
     }
   }
 
+  /*
+   * Use AccelStepper
+   */
+
   stepper1.moveTo(basePos);
   stepper1.setSpeed(STEP_MOTOR_SPEED_BASE);    
     
   while (stepper1.distanceToGo() !=0) {
     stepper1.runSpeedToPosition();
   }
+
+  /*
+   * Move stepper motor#4 = Wrist
+   * with PS2 joystick
+   */
+
+  /*
+   * PSS_LY
+   */
       
-  //------------------------------------------------------------
-  // ------ Move stepper motor#4 Wrist with PS2 joystick -------
-  //------------------------------------------------------------
-  
   if((ps2x.Analog(PSS_LY) == 255)){
     if(pinSwichOn){
       wristStepMove1 = 0;     
@@ -563,6 +560,10 @@ void loop() {
       wristPos = wristPos-1;          
     }
   }      
+
+  /*
+   * Use AccelStepper
+   */
   
   stepper4.moveTo(wristPos);
   stepper4.setSpeed(STEP_MOTOR_SPEED_WRIST);    
@@ -571,10 +572,15 @@ void loop() {
     stepper4.runSpeedToPosition();
   }
 
-  //------------------------------------------------------------
-  // ------ Move stepper motor#3 Elbow with PS2 joystick -------
-  //------------------------------------------------------------
-  
+  /*
+   * Move stepper motor#3 = Elbow 
+   * with PS2 joystick
+   */
+
+  /*
+   * PSS_LX
+   */
+
   if((ps2x.Analog(PSS_LX) == 255)){
     if(pinSwichOn){
       elbowStepMove1 = 0;     
@@ -600,6 +606,10 @@ void loop() {
       elbowPos = elbowPos+1;          
     }
   }      
+
+  /*
+   * Use AccelStepper
+   */
       
   stepper3.moveTo(elbowPos);
   stepper3.setSpeed(STEP_MOTOR_SPEED_ELBOW);    
@@ -608,10 +618,15 @@ void loop() {
     stepper3.runSpeedToPosition();
   }
 
-  //---------------------------------------------------------------
-  // ------ Move stepper motor#2 Shoulder with PS2 joystick -------
-  //---------------------------------------------------------------
-  
+  /*
+   * Move stepper motor#2 = Elbow 
+   * with PS2 joystick
+   */
+
+  /*
+   * PSS_RY
+   */
+
   if((ps2x.Analog(PSS_RY) == 255)){
     if(pinSwichOn){
       shoulerStepMove1 = 0;     
@@ -637,6 +652,10 @@ void loop() {
       shoulderPos = shoulderPos-1;          
     }
   }      
+
+  /*
+   * Use AccelStepper
+   */
       
   stepper2.moveTo(shoulderPos);
   stepper2.setSpeed(STEP_MOTOR_SPEED_SHOULDER);    
@@ -645,40 +664,47 @@ void loop() {
     stepper2.runSpeedToPosition();
   }
 
-  // -----------------------------------------------
-  // ------ Press button for playing sample --------
-  // -----------------------------------------------
+  /*
+   * Press button PSB_CIRCLE
+   * with PS2 joystick
+   * 
+   * Execute sequence 1 or 2 depending on 
+   * the value sended by Raspberry pi via I2C
+   */
       
   if(ps2x.ButtonPressed(PSB_CIRCLE)){
 
     // 1 = turnLeft
     // 2 = turnRight
-    
-    if(i2cData == 1)
-      startSequence(1);
 
-    if(i2cData == 2)
-      startSequence(2);
+    startSequence(1);
+
+//    if(i2cData == 1)
+//      startSequence(1);
+//
+//    if(i2cData == 2)
+//      startSequence(2);
   }       
 
-//----------------------------------------   
+  /*
+   * Misc
+   */
 
   ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
    
 }
 
-// -------------------------
-// ------ initMotors -------
-// -------------------------
+  /*
+   * initMotors 
+   * Homing
+   * This is done when the system is started
+   */
 
 void initMotors(){
 
-  // --------- Homing Base ----------
-
-//homingBase = 1;
-//homingElbow = 1;
-//homingShoulder = 1;
-//homingWrist = 1;
+  /*
+   * Homing Base
+   */
 
   if(!homingBase){
 
@@ -702,7 +728,9 @@ void initMotors(){
       pos = 0;
   }
 
-  // --------- Homing Wrist ----------
+  /*
+   * Homing Wrist
+   */
   
   if(homingBase && !homingWrist){
 
@@ -726,9 +754,10 @@ void initMotors(){
     pos = 0;
   } 
 
+  /*
+   * Homing Elbow
+   */
 
-  // --------- Homing Elbow ----------
-  
   if(homingBase && homingWrist && !homingElbow){
 
     stepper3.setMaxSpeed(1000);
@@ -751,8 +780,10 @@ void initMotors(){
     pos = 0;
   }
 
-  // --------- Homing Shoulder ----------
-  
+  /*
+   * Homing Shoulder
+   */
+
   if(homingBase && homingWrist && homingElbow && !homingShoulder){
 
     stepper2.setMaxSpeed(1000);
@@ -775,7 +806,9 @@ void initMotors(){
     pos = 0;
   }
 
-  // --------- Homing Servos ----------
+  /*
+   * Homing Servo
+   */
   
   if(homingBase && homingShoulder && homingWrist && homingElbow){
     homingWrist = 0;  
@@ -799,9 +832,10 @@ void initMotors(){
   }
 }
 
-// ------------------------------------------------
-// Handle reception of incoming I2C data
-// ------------------------------------------------
+  /*
+   * Handle reception of incoming I2C data
+   * Using interrupt routine
+   */
 
 void receiveData(int byteCount) {
   while (Wire.available()) {
@@ -812,19 +846,21 @@ void receiveData(int byteCount) {
   }
 }
 
-// ------------------------------------------------
-// Handle request to send I2C data
-// ------------------------------------------------
+  /*
+   * Handle request to send I2C data
+   * Used for debugging
+   */
 
 void sendData() { 
   //Wire.write(sequenceState);
   Wire.write(0);
 }
 
-// ------------------------------------------------
-// -- startSequence
-// -- Input: int, 1=turn left, 2=turn right
-// ------------------------------------------------
+  /*
+   * startSequence
+   * Input: int, 1=turn left, 2=turn right
+   * Using Inverse Kinematics
+   */
 
 void startSequence(int leftRight){
 
@@ -833,25 +869,38 @@ void startSequence(int leftRight){
     // c = angle wrist
     // d = angle base
 
-    // --------------------------------------
-    // -------------- Sequence1 -------------
-    // --------------------------------------
-    // -------- Down: Shoulder + Elbow + Wrist ---------    
+  /*
+   * STEP1
+   * Down: Shoulder + Elbow + Wrist
+   */
 
-    Serial.println("Sequence1");
+    Serial.println("STEP1");
+
+  /*
+   * dx, dy, dz = coordinates of 
+   * the End Effector
+   */
         
     dx = 22.0;
     dy = 0.0;
     dz = -14.58;
     dy2 = 0.0;    // Base
   
-    // Calculate angle for the base
-    d = round(rad2Deg(atan2(dx,dy2)));
+    /*
+     * Calculate angle for the base
+     */    
+    //d = round(rad2Deg(atan2(dx,dy2)));
+    d = round(rad2Deg(atan2(dy2,dx)));
 
-    // Calculate inverse kinepatics
-    // Get the angles
+    /*
+     * Calculate inverse kinematics
+     * Send the coordinates and get the angles
+     */    
     inverseKinematics(dx,dy,dz);
 
+    /*
+     * Convert from Rad to Deg
+     */    
     a = round(rad2Deg(a));
     b = round(rad2Deg(b));
     c = round(rad2Deg(c));
@@ -860,7 +909,11 @@ void startSequence(int leftRight){
     angle[0].b = b;
     angle[0].c = c;
     angle[0].d = d;
-          
+
+    /*
+     * AccelStepper
+     */    
+
     stepper1.setMaxSpeed(700);         // Base
     stepper1.setAcceleration(500);
     stepper3.setMaxSpeed(700);         // Elbow
@@ -874,12 +927,19 @@ void startSequence(int leftRight){
     targetPosShoulder = 0;
     targetPosElbow = 0;
     targetPosWrist = 0;
-        
+
+    /*
+     * Convert angle to stepper motor steps
+     */            
     targetPosBase = (d*1200/90);
     targetPosShoulder = (a*1200/90);
     targetPosElbow = ((180-b)*1200/90);
     targetPosWrist = ((c-180)*1200/90);
 
+    /*
+     * Move!
+     */
+     
     stepper1.moveTo(targetPosBase);
     stepper2.moveTo(-targetPosShoulder);
     stepper3.moveTo(-targetPosElbow);
@@ -907,8 +967,11 @@ void startSequence(int leftRight){
     }
   
     delay(1000);
-  
-    // Close gripper  
+
+    /*
+     * Close gripper  
+     */    
+
     servoPos = 55;
   
     for(int i=0 ; i<servoPos; i++){
@@ -918,25 +981,37 @@ void startSequence(int leftRight){
   
     delay(1000);
   
-    // --------------------------------------
-    // -------------- Sequence2 -------------
-    // --------------------------------------
-    // -------- Up: Shoulder + Elbow + Wrist ---------    
+  /*
+   * STEP2
+   * Up: Shoulder + Elbow + Wrist
+   */
 
-    Serial.println("Sequence2");
+    Serial.println("STEP2");
+
+  /*
+   * dx, dy, dz = coordinates of 
+   * the End Effector
+   */
         
     dx = 24.0;
     dy = 0.0;
     dz = 13.0;
     dy2 = 0.0;
       
-    // Calculate angle for the base
-    d = round(rad2Deg(atan2(dx,dy2)));
+    /*
+     * Calculate angle for the base
+     */    
+    d = round(rad2Deg(atan2(dy2,dx)));
 
-    // Calculate inverse kinepatics
-    // Get the angles
+    /*
+     * Calculate inverse kinematics
+     * Send the coordinates and get the angles
+     */    
     inverseKinematics(dx,dy,dz);
 
+    /*
+     * Convert from Rad to Deg
+     */    
     a = round(rad2Deg(a));
     b = round(rad2Deg(b));
     c = round(rad2Deg(c));
@@ -945,11 +1020,17 @@ void startSequence(int leftRight){
     angle[1].b = b;
     angle[1].c = c;
     angle[1].d = d;
-  
+
+    /*
+     * Calculate the new angles
+     */    
     a -= angle[0].a;
     b -= angle[0].b;
     c -= angle[0].c;
-    
+
+    /*
+     * AccelStepper
+     */        
     stepper1.setMaxSpeed(2500);         // Base
     stepper1.setAcceleration(1500);
     stepper4.setMaxSpeed(900);         // Wrist
@@ -958,12 +1039,18 @@ void startSequence(int leftRight){
     stepper3.setAcceleration(2000);
     stepper2.setMaxSpeed(2500);         // Shoulder
     stepper2.setAcceleration(2000);
-  
+
+    /*
+     * Convert angle to stepper motor steps
+     */      
     targetPosBase = (d*1200/90);
     targetPosShoulder = (a*1200/90);
     targetPosElbow = (b*1200/90);
     targetPosWrist = (c*1200/90);
-  
+
+     /*
+     * Move!
+     */
     stepper1.moveTo(targetPosBase);
     stepper2.moveTo(-targetPosShoulder);
     stepper3.moveTo(targetPosElbow);
@@ -991,17 +1078,27 @@ void startSequence(int leftRight){
     }
 
     delay(1000);
+
+  /*
+   * STEP3
+   * Down: Shoulder + Elbow + Wrist + Base
+   */
     
-    // --------------------------------------
-    // -------------- Sequence3 -------------
-    // --------------------------------------
-    // -------- Down: Shoulder + Elbow + Wrist + Base ---------        
-    
-    Serial.println("Sequence3");
+    Serial.println("STEP3");
+
+  /*
+   * dx, dy, dz = coordinates of 
+   * the End Effector
+   */
     
     dx = 22.0;
     dy = 0.0;
     dz = -14.58;
+
+    /*
+     * Turn left or right depending on
+     * the value received by Raspberry Pi
+     */    
     
     if(leftRight == 1){
       dy2 = 30.0;     // Base
@@ -1011,13 +1108,20 @@ void startSequence(int leftRight){
       dy2 = -30.0;     // Base
     }
 
-    // Calculate angle for the base
+    /*
+     * Calculate angle for the base
+     */    
     d = round(rad2Deg(atan2(dy2,dx)));
     
-    // Calculate inverse kinepatics
-    // Get the angles
+    /*
+     * Calculate inverse kinematics
+     * Send the coordinates and get the angles
+     */    
     inverseKinematics(dx,dy,dz);
 
+    /*
+     * Convert from Rad to Deg
+     */    
     a = round(rad2Deg(a));
     b = round(rad2Deg(b));
     c = round(rad2Deg(c));
@@ -1030,7 +1134,10 @@ void startSequence(int leftRight){
     a -= angle[1].a;  // Shoulder
     b -= angle[1].b;  // Elbow
     c -= angle[1].c;  // Wrist
-    
+
+    /*
+     * AccelStepper
+     */    
     stepper1.setMaxSpeed(1500);         // Base
     stepper1.setAcceleration(1000);
     stepper4.setMaxSpeed(2500);         // Wrist
@@ -1039,12 +1146,19 @@ void startSequence(int leftRight){
     stepper3.setAcceleration(2000);
     stepper2.setMaxSpeed(2500);         // Shoulder
     stepper2.setAcceleration(2000);
-  
+
+    /*
+     * Convert angle to stepper motor steps
+     */    
+
     targetPosBase = (d*1200/90);
     targetPosShoulder = (a*1200/90);
     targetPosElbow = (b*1200/90);
     targetPosWrist = (c*1200/90);
 
+    /*
+     * Move!
+     */
     stepper1.moveTo(targetPosBase);
     stepper4.moveTo(-targetPosWrist);
     stepper2.moveTo(-targetPosShoulder);
@@ -1071,7 +1185,10 @@ void startSequence(int leftRight){
         moveStepper = 0;            
       }
     }
-      // Open gripper
+
+    /*
+     * open gripper  
+     */    
       
       servoPos = 1;
     
@@ -1082,26 +1199,47 @@ void startSequence(int leftRight){
   
     delay(1000);
 
-    // --------------------------------------
-    // -------------- Sequence4 -------------
-    // --------------------------------------
-    // -------- Up: Shoulder + Elbow + Wrist + Base ---------        
+  /*
+   * STEP4
+   * Up: Shoulder + Elbow + Wrist + Base
+   */
     
-    Serial.println("Sequence4");
-    
+    Serial.println("STEP4");
+
+  /*
+   * dx, dy, dz = coordinates of 
+   * the End Effector
+   */    
     dx = 24.0;
     dy = 0.0;
     dz = 13.0;
-    dy2 = 0.0;     // Base
 
-    // Calculate angle for the base
+    /*
+     * Turn left or right depending on
+     * the value received by Raspberry Pi
+     */    
+    if(leftRight == 1){
+      dy2 = 30.0;     // Base
+    }
+  
+    if(leftRight == 2){
+      dy2 = -30.0;     // Base
+    }
+
+    /*
+     * Calculate angle for the base
+     */    
     d = round(rad2Deg(atan2(dy2,dx)));
 
-    // Calculate inverse kinepatics
-    // Get the angles
+    /*
+     * Calculate inverse kinematics
+     * Send the coordinates and get the angles
+     */    
     inverseKinematics(dx,dy,dz);
       
-    // convert angles to deg
+    /*
+     * Convert from Rad to Deg
+     */    
     a = round(rad2Deg(a));
     b = round(rad2Deg(b));
     c = round(rad2Deg(c));
@@ -1110,12 +1248,16 @@ void startSequence(int leftRight){
     angle[3].b = b;
     angle[3].c = c;
     angle[3].d = d;
-  
+
     a -= angle[2].a;  // Shoulder
     b -= angle[2].b;  // Elbow
     c -= angle[2].c;  // Wrist
     d -= angle[2].d;  // Base
         
+    /*
+     * AccelStepper
+     */    
+
     stepper1.setMaxSpeed(1500);         // Base
     stepper1.setAcceleration(1000);    
     stepper4.setMaxSpeed(2500);         // Wrist
@@ -1125,16 +1267,22 @@ void startSequence(int leftRight){
     stepper2.setMaxSpeed(2500);         // Shoulder
     stepper2.setAcceleration(2000);
   
+    /*
+     * Convert angle to stepper motor steps
+     */    
     targetPosBase = (d*1200/90);
     targetPosShoulder = (a*1200/90);
     targetPosElbow = (b*1200/90);
     targetPosWrist = (c*1200/90);
-  
-    stepper4.moveTo(-targetPosWrist);
+
+    /*
+     * Move!
+     */
+    stepper1.moveTo(targetPosBase);
     stepper2.moveTo(-targetPosShoulder);
     stepper3.moveTo(targetPosElbow);
-    stepper1.moveTo(targetPosBase);
-  
+    stepper4.moveTo(-targetPosWrist);    
+
     moveStepper = 1;
   
     while(moveStepper){
@@ -1159,26 +1307,37 @@ void startSequence(int leftRight){
   
     delay(1000);    
 
-    // --------------------------------------
-    // -------------- Sequence5 -------------
-    // --------------------------------------
-    // -------- Up: Shoulder + Elbow + Wrist + Base ---------        
-
-    Serial.println("Sequence5");
+  /*
+   * STEP5
+   * Up: Shoulder + Elbow + Wrist + Base
+   */
     
-    dx = 24.0;
+    Serial.println("STEP5");
+
+  /*
+   * dx, dy, dz = coordinates of 
+   * the End Effector
+   */
+    
+    dx = 31.0;
     dy = 0.0;
-    dz = 13.0;
+    dz = 0.0;
     dy2 = 0.0;
   
-    // Calculate angle for the base
+    /*
+     * Calculate angle for the base
+     */    
     d = round(rad2Deg(atan2(dy2,dx)));
 
-    // Calculate inverse kinepatics
-    // Get the angles
+    /*
+     * Calculate inverse kinematics
+     * Send the coordinates and get the angles
+     */    
     inverseKinematics(dx,dy,dz);
       
-    // convert angles to deg
+    /*
+     * Convert from Rad to Deg
+     */    
     a = round(rad2Deg(a));
     b = round(rad2Deg(b));
     c = round(rad2Deg(c));
@@ -1192,7 +1351,10 @@ void startSequence(int leftRight){
     b -= angle[3].b;
     c -= angle[3].c;
     d -= angle[3].d;
-    
+
+    /*
+     * AccelStepper
+     */        
     stepper1.setMaxSpeed(1500);         // Base
     stepper1.setAcceleration(1000);
     stepper4.setMaxSpeed(2500);         // Wrist
@@ -1201,12 +1363,18 @@ void startSequence(int leftRight){
     stepper3.setAcceleration(2000);
     stepper2.setMaxSpeed(2500);         // Shoulder
     stepper2.setAcceleration(2000);
-  
+
+    /*
+     * Convert angle to stepper motor steps
+     */      
     targetPosBase = (d*1200/90);
     targetPosShoulder = (a*1200/90);
     targetPosElbow = (b*1200/90);
     targetPosWrist = (c*1200/90);
-  
+
+    /*
+     * Move!
+     */  
     stepper4.moveTo(-targetPosWrist);
     stepper2.moveTo(-targetPosShoulder);
     stepper3.moveTo(targetPosElbow);
@@ -1236,86 +1404,14 @@ void startSequence(int leftRight){
   
     delay(1000);
 
-    // --------------------------------------
-    // -------------- Sequence6 -------------
-    // --------------------------------------
-    // --------- Initial position  --------
-
-    Serial.println("Sequence6");
-    
-    dx = 31;
-    dy = 0.0;
-    dz = 0.0;
-    dy2 = 0.0;
-  
-    inverseKinematics(dx,dy,dz);
-  
-    // Initialize angles @90 degrees = postion 0
-    d = round(rad2Deg(atan2(dx,dy2)));
-    a = round(rad2Deg(a));
-    b = round(rad2Deg(b));
-    c = round(rad2Deg(c));
-  
-    angle[4].a = a;
-    angle[4].b = b;
-    angle[4].c = c;
-    angle[4].d = d;
-  
-    a -= angle[3].a;
-    b -= angle[3].b;
-    c -= angle[3].c;
-    d -= angle[3].d;
-    
-    stepper1.setMaxSpeed(1500);         // Base
-    stepper1.setAcceleration(1000);
-    stepper4.setMaxSpeed(1500);         // Wrist
-    stepper4.setAcceleration(1000);
-    stepper3.setMaxSpeed(1500);         // Elbow
-    stepper3.setAcceleration(1000);
-    stepper2.setMaxSpeed(1500);         // Shoulder
-    stepper2.setAcceleration(1000);
-  
-    targetPosBase = (d*1200/90);
-    targetPosShoulder = (a*1200/90);
-    targetPosElbow = (b*1200/90);
-    targetPosWrist = (c*1200/90);
-  
-    stepper4.moveTo(-targetPosWrist);
-    stepper2.moveTo(-targetPosShoulder);
-    stepper3.moveTo(targetPosElbow);
-    stepper1.moveTo(targetPosBase);
-  
-    moveStepper = 1;
-  
-    while(moveStepper){
-      stepper4.run();    
-      stepper2.run();     
-      stepper3.run();    
-      //stepper1.run();   // Base
-  
-      if(stepper2.distanceToGo()==0
-         && stepper3.distanceToGo()==0 
-         && stepper4.distanceToGo()==0
-         ){
-        
-        //stepper1.setCurrentPosition(0);    
-        stepper2.setCurrentPosition(0);
-        stepper3.setCurrentPosition(0);
-        stepper4.setCurrentPosition(0);
-        moveStepper = 0;            
-      }
-    }
-  
-    delay(1000);     
-  
 }
 
-// ------------------------------------------------
-// -- Inverse Kinematics
-// -- From https://www.robotshop.com
-// Inparameters EE x,y,z coordinates
-// Return angles for base,shoulder, elbow and wrist
-// ------------------------------------------------
+/*
+ * Inverse Kinematics
+ * Inparameters EE x,y,z coordinates
+ * Return angles for base,shoulder, elbow and wrist
+ * For explanation please take a look to the document kinematics_4DOF.pdf
+ */
 
 void inverseKinematics(float dx ,float dy ,float dz){
 
