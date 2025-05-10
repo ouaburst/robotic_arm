@@ -1,21 +1,20 @@
 #include <PsxControllerHwSpi.h>
 #include <AccelStepper.h>
 
-// Pins for Hardware SPI (Uno: MOSI=11, MISO=12, SCK=13)
+// Pins for Hardware SPI (Mega: MOSI=51, MISO=50, SCK=52)
 #define PIN_ATT 53  // Attention pin
 
 PsxControllerHwSpi<PIN_ATT> psx;
 
-// Stepper motor driver pins: Step pin = 7, Direction pin = 6
-AccelStepper stepper(AccelStepper::DRIVER, 7, 6); 
+// Stepper motor driver pins: Step = 7, Dir = 6
+AccelStepper stepper(AccelStepper::DRIVER, 7, 6);
 
 void setup() {
     Serial.begin(115200);
 
-    // Initialize PS2 controller
     if (!psx.begin()) {
         Serial.println("Controller not found");
-        while (true);  // Halt if not found
+        while (true);
     } else {
         Serial.println("Controller found !!");
     }
@@ -24,28 +23,24 @@ void setup() {
     psx.enableAnalogSticks();
     psx.exitConfigMode();
 
-    // Initialize stepper settings
-    stepper.setMaxSpeed(1000);     // Max speed in steps per second
-    stepper.setAcceleration(500);  // Acceleration in steps per second squared
+    stepper.setMaxSpeed(500);     
+    stepper.setAcceleration(100);  
 }
 
 void loop() {
-    if (psx.read()) {
-        if (psx.buttonPressed(PSB_PAD_UP)) {
-            Serial.println("PSB_PAD_UP pressed");
-            stepper.setSpeed(300);  // Positive direction
-            stepper.runSpeed();     // Non-blocking
-        }
-        else if (psx.buttonPressed(PSB_PAD_DOWN)) {
-            Serial.println("PSB_PAD_DOWN pressed");
-            stepper.setSpeed(-300);  // Negative direction
-            stepper.runSpeed();      // Non-blocking
-        }
-        else {
-            stepper.setSpeed(0);  // Stop if no button is pressed
-        }
+    psx.read();  // Always read controller input
+
+    if (psx.buttonPressed(PSB_PAD_UP)) {
+        stepper.setSpeed(500);  // Faster forward
+    }
+    else if (psx.buttonPressed(PSB_PAD_DOWN)) {
+        stepper.setSpeed(-500);  // Faster backward
+    }
+    else {
+        stepper.setSpeed(0);  // Stop motor
     }
 
-    stepper.runSpeed();  // Keep running the motor
-    delay(1);
+    stepper.runSpeed();  // Must be called frequently
+    delay(2);
+
 }
