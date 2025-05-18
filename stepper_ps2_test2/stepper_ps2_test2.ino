@@ -23,8 +23,8 @@ void setup() {
     psx.enableAnalogSticks();
     psx.exitConfigMode();
 
-    stepper.setMaxSpeed(500);     
-    stepper.setAcceleration(100);  
+    stepper.setMaxSpeed(1000);     
+    stepper.setAcceleration(300);  
 }
 
 void loop() {
@@ -37,10 +37,13 @@ void loop() {
         stepper.setSpeed(-500);  // Faster backward
     }
     else {
-        stepper.setSpeed(0);  // Stop motor
+        //stepper.setSpeed(0);  // Stop motor
+        stepper.stop();
     }
 
-    stepper.runSpeed();  // Must be called frequently
+    //stepper.runSpeed();  // Must be called frequently
+    stepper.run();
+    
     delay(2);
 
 }
