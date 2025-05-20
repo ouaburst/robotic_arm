@@ -14,7 +14,7 @@ void setup() {
 
     if (!psx.begin()) {
         Serial.println("Controller not found");
-        while (true);
+        while (true);  // Stop here if no controller is connected
     } else {
         Serial.println("Controller found !!");
     }
@@ -23,27 +23,28 @@ void setup() {
     psx.enableAnalogSticks();
     psx.exitConfigMode();
 
-    stepper.setMaxSpeed(1000);     
-    stepper.setAcceleration(300);  
+    stepper.setMaxSpeed(1000);  // Maximum speed
 }
 
 void loop() {
-    psx.read();  // Always read controller input
+    psx.read();  // Always read the controller input
 
-    if (psx.buttonPressed(PSB_PAD_UP)) {
-        stepper.setSpeed(500);  // Faster forward
-    }
-    else if (psx.buttonPressed(PSB_PAD_DOWN)) {
-        stepper.setSpeed(-500);  // Faster backward
-    }
-    else {
-        //stepper.setSpeed(0);  // Stop motor
-        stepper.stop();
+    uint8_t x, y;
+    psx.getLeftAnalog(x, y);  // Get analog stick position (0–255)
+
+    // Convert Y value to signed speed
+    int speed = map(y, 0, 255, 500, -500);  // Forward = low y, Backward = high y
+
+    // Dead zone to stop jitter when near center
+    if (abs(y - 128) < 10) {
+        speed = 0;
     }
 
-    //stepper.runSpeed();  // Must be called frequently
+    //stepper.setSpeed(speed);
+    stepper.setAcceleration(speed);
+    stepper.setSpeed(speed);
+    //stepper.runSpeed();
     stepper.run();
-    
-    delay(2);
 
-}
+    delay(2);  // Prevent CPU overload
+}  
