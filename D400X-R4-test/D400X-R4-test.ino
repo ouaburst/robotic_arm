@@ -59,7 +59,7 @@ void loop() {
   limitTriggered = !digitalRead(pinSwich);
 
   if (limitTriggered) {
-    tone(buzzer, 1950);
+    //tone(buzzer, 1950);
   } else {
     noTone(buzzer);
   }
@@ -87,51 +87,63 @@ void loop() {
     gripperActive = false;
   }
 
-  /*
-   * Stepper control — only if no gripper active and no limit triggered
-   */
-  if (!limitTriggered) {
-    if (rawSpeedValue0 >= deadZoneMin && rawSpeedValue0 <= deadZoneMax) {
-      stepper1.stop();
-    } else {
-      long speed = map(rawSpeedValue0, 0, 1023, -1000, 1000);
-      if (abs(speed) < minEffectiveSpeed)
-        speed = (speed > 0 ? minEffectiveSpeed : -minEffectiveSpeed);
-      stepper1.setSpeed(speed);
-    }
+  if (rawSpeedValue0 >= deadZoneMin && rawSpeedValue0 <= deadZoneMax) {
+    stepper1.stop();  // Smooth stop
+  } else {
+    long speed = map(rawSpeedValue0, 0, 1023, -1000, 1000);
+    
+    if (speed > 0 && speed < minEffectiveSpeed)
+      speed = minEffectiveSpeed;
+    else if (speed < 0 && speed > -minEffectiveSpeed)
+      speed = -minEffectiveSpeed;
 
-    if (rawSpeedValue1 >= deadZoneMin && rawSpeedValue1 <= deadZoneMax) {
-      stepper2.stop();
-    } else {
-      long speed = map(rawSpeedValue1, 0, 1023, -1000, 1000);
-      if (abs(speed) < minEffectiveSpeed)
-        speed = (speed > 0 ? minEffectiveSpeed : -minEffectiveSpeed);
-      stepper2.setSpeed(speed);
-    }
+    stepper1.setSpeed(speed);
+  }
 
-    if (rawSpeedValue2 >= deadZoneMin && rawSpeedValue2 <= deadZoneMax) {
-      stepper3.stop();
-    } else {
-      long speed = map(rawSpeedValue2, 0, 1023, -1000, 1000);
-      if (abs(speed) < minEffectiveSpeed)
-        speed = (speed > 0 ? minEffectiveSpeed : -minEffectiveSpeed);
-      stepper3.setSpeed(speed);
-    }
+  if (rawSpeedValue1 >= deadZoneMin && rawSpeedValue1 <= deadZoneMax) {
+    stepper2.stop();  // Smooth stop
+  } else {
+    long speed = map(rawSpeedValue1, 0, 1023, -1000, 1000);
+    
+    if (speed > 0 && speed < minEffectiveSpeed)
+      speed = minEffectiveSpeed;
+    else if (speed < 0 && speed > -minEffectiveSpeed)
+      speed = -minEffectiveSpeed;
 
-    if (rawSpeedValue3 >= deadZoneMin && rawSpeedValue3 <= deadZoneMax) {
-      stepper4.stop();
-    } else {
-      long speed = map(rawSpeedValue3, 0, 1023, -1000, 1000);
-      if (abs(speed) < minEffectiveSpeed)
-        speed = (speed > 0 ? minEffectiveSpeed : -minEffectiveSpeed);
-      stepper4.setSpeed(speed);
-    }
+    stepper2.setSpeed(speed);
+  }
+
+  if (rawSpeedValue2 >= deadZoneMin && rawSpeedValue2 <= deadZoneMax) {
+    stepper3.stop();  // Smooth stop
+  } else {
+    long speed = map(rawSpeedValue2, 0, 1023, -1000, 1000);
+    
+    if (speed > 0 && speed < minEffectiveSpeed)
+      speed = minEffectiveSpeed;
+    else if (speed < 0 && speed > -minEffectiveSpeed)
+      speed = -minEffectiveSpeed;
+
+    stepper3.setSpeed(speed);
+  }
+
+
+  if (rawSpeedValue3 >= deadZoneMin && rawSpeedValue3 <= deadZoneMax) {
+    stepper4.stop();  // Smooth stop
+  } else {
+    long speed = map(rawSpeedValue3, 0, 1023, -1000, 1000);
+    
+    if (speed > 0 && speed < minEffectiveSpeed)
+      speed = minEffectiveSpeed;
+    else if (speed < 0 && speed > -minEffectiveSpeed)
+      speed = -minEffectiveSpeed;
+
+    stepper4.setSpeed(speed);
   }
 
   /*
    * Only run steppers if gripper is inactive and no switch is triggered
    */
-  if (!gripperActive && !limitTriggered) {
+  if (!gripperActive) {
     stepper1.run();
     stepper2.run();
     stepper3.run();
