@@ -5,26 +5,30 @@
 
 AccelStepper stepper4(AccelStepper::DRIVER, 3, 2);  // Wrist
 
-int wristPos = 0;
+const int potPin = A3;
+const int deadZoneMin = 420;
+const int deadZoneMax = 570;
+const int minEffectiveSpeed = 100;
+
+int pinSwichOn = 0;
 int wristStepMove1 = 1;
 int wristStepMove2 = 1;
-int pinSwichOn = 0;
 
 void setup() {
   Serial.begin(9600);
   pinMode(pinSwich, INPUT_PULLUP);
   pinMode(buzzer, OUTPUT);
+  noTone(buzzer);
 
   stepper4.setMaxSpeed(1000);
-  stepper4.setAcceleration(500);
-
-  noTone(buzzer);  // Ensure buzzer is off at start
+  stepper4.setAcceleration(400);  // Enable acceleration
 }
 
 void loop() {
-  // Simulate joystick input (replace with ps2x.Analog or analogRead(A3) in your setup)
-  int joystickLY = analogRead(A3);  // Replace with actual control
-  pinSwichOn = !digitalRead(pinSwich);  // LOW = switch is pressed
+  int potValue = analogRead(potPin);
+  pinSwichOn = !digitalRead(pinSwich);  // LOW = pressed
+
+  long speed = 0;
 
   // Buzzer feedback
   if (pinSwichOn) {
@@ -33,8 +37,8 @@ void loop() {
     noTone(buzzer);
   }
 
-  // ---- Wrist movement logic (same as original) ----
-  if (joystickLY > 1000) {  // Forward
+  if (potValue > deadZoneMax) {
+    // Moving positive
     if (pinSwichOn) {
       wristStepMove1 = 0;
     } else {
@@ -43,10 +47,11 @@ void loop() {
     }
 
     if (!pinSwichOn || !wristStepMove2) {
-      wristPos += 1;
+      speed = map(potValue, deadZoneMax, 1023, minEffectiveSpeed, 1000);
     }
 
-  } else if (joystickLY < 30) {  // Backward
+  } else if (potValue < deadZoneMin) {
+    // Moving negative
     if (pinSwichOn) {
       wristStepMove2 = 0;
     } else {
@@ -55,14 +60,14 @@ void loop() {
     }
 
     if (!pinSwichOn || !wristStepMove1) {
-      wristPos -= 1;
+      speed = map(potValue, deadZoneMin, 0, -minEffectiveSpeed, -1000);
     }
+
+  } else {
+    // Dead zone
+    speed = 0;
   }
 
-  // ---- Move wrist ----
-  stepper4.moveTo(wristPos);
-  stepper4.setSpeed(400);  // Or STEP_MOTOR_SPEED_WRIST
-  while (stepper4.distanceToGo() != 0) {
-    stepper4.runSpeedToPosition();
-  }
+  stepper4.setSpeed(speed);
+  stepper4.run();  
 }
