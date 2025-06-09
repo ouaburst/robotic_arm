@@ -41,6 +41,9 @@ bool shoulderStepMove1 = 1, shoulderStepMove2 = 1;
 bool elbowStepMove1 = 1, elbowStepMove2 = 1;
 bool wristStepMove1 = 1, wristStepMove2 = 1;
 
+static unsigned long lastBeepTime = 0;
+static int beepStep = 0;
+
 void setup() {
   Serial.begin(9600);
 
@@ -75,11 +78,24 @@ void loop() {
 
   pinSwichOn = !digitalRead(pinSwich);  // LOW = pressed
 
-  // 🔔 Buzzer feedback
-  if (pinSwichOn) tone(buzzer, 1950);
-  else noTone(buzzer);
-
-  // 🛑 Gripper overrides stepper control
+  // Buzzer feedback
+  if (pinSwichOn) {
+    unsigned long now = millis();
+    if (now - lastBeepTime > 120) {
+      switch (beepStep) {
+        case 0: tone(buzzer, 880); break;   // A5
+        case 1: tone(buzzer, 988); break;   // B5
+        case 2: tone(buzzer, 1047); break;  // C6
+      }
+      beepStep = (beepStep + 1) % 3;
+      lastBeepTime = now;
+    }
+  } else {
+    noTone(buzzer);
+    beepStep = 0;
+  }
+  
+  // Gripper overrides stepper control
   if (rawSpeed4 > deadZoneMax || rawSpeed4 < deadZoneMin) {
     gripperActive = true;
 
